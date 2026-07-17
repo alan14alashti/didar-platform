@@ -1,0 +1,173 @@
+@import '@fontsource/vazirmatn/400.css';
+@import '@fontsource/vazirmatn/500.css';
+@import '@fontsource/vazirmatn/600.css';
+@import '@fontsource/vazirmatn/700.css';
+@import '@fontsource/vazirmatn/800.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Overridden at runtime with the active brand's palette (white-label). */
+  --color-primary: #e23744;
+  --color-secondary: #1f2937;
+  --color-accent: #0ea5a4;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+}
+
+body {
+  font-family: 'Vazirmatn', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  background-color: #fafafa;
+}
+
+.tabular-nums {
+  font-feature-settings: 'tnum';
+}
+
+::selection {
+  background-color: var(--color-primary);
+  color: white;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  height: 6px;
+  width: 6px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: #d1d5db;
+  border-radius: 999px;
+}
+
+/* ---------- Reusable "fancy UI" building blocks ---------- */
+
+.brand-gradient {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+}
+
+.text-gradient {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Frosted glass surface used for the sticky header and floating panels. */
+.glass-panel {
+  background-color: rgb(255 255 255 / 0.75);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+}
+
+/* Soft, elevated surface used for cards throughout the app. */
+.surface-card {
+  background-color: white;
+  border-radius: 1.5rem;
+  border: 1px solid rgb(15 23 42 / 0.05);
+  box-shadow: 0 8px 24px -4px rgb(15 23 42 / 0.08), 0 2px 6px -2px rgb(15 23 42 / 0.04);
+  transition: box-shadow 300ms ease, transform 300ms ease;
+}
+
+/* Primary call-to-action button: gradient fill, lift + glow on hover. */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  padding: 0.75rem 1.5rem;
+  font-weight: 700;
+  font-size: 0.875rem;
+  color: white;
+  background: linear-gradient(135deg, var(--color-primary), color-mix(in srgb, var(--color-primary) 70%, var(--color-accent)));
+  box-shadow: 0 10px 20px -6px color-mix(in srgb, var(--color-primary) 60%, transparent);
+  transition: transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 220ms ease, opacity 220ms ease;
+}
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 16px 28px -6px color-mix(in srgb, var(--color-primary) 65%, transparent);
+}
+.btn-primary:active:not(:disabled) {
+  transform: translateY(0) scale(0.99);
+}
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  padding: 0.7rem 1.4rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: #374151;
+  border: 1.5px solid #e5e7eb;
+  background-color: white;
+  transition: border-color 200ms ease, color 200ms ease, transform 200ms ease;
+}
+.btn-outline:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  transform: translateY(-1px);
+}
+
+.input-fancy {
+  width: 100%;
+  border-radius: 0.9rem;
+  border: 1.5px solid #e5e7eb;
+  padding: 0.65rem 1rem;
+  font-size: 0.875rem;
+  background-color: #fff;
+  transition: border-color 200ms ease, box-shadow 200ms ease;
+}
+.input-fancy:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-primary) 12%, transparent);
+}
+
+/* Decorative blurred gradient blobs for hero/section backgrounds. */
+.blob {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(60px);
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.animate-blob {
+  animation: blob 14s infinite ease-in-out;
+}
+.animate-blob-delay-2 {
+  animation-delay: 3s;
+}
+.animate-blob-delay-4 {
+  animation-delay: 6s;
+}
+
+/* Route transition */
+.page-fade-enter-active {
+  animation: fade-up 0.35s ease-out both;
+}
+.page-fade-leave-active {
+  transition: opacity 0.12s ease;
+}
+.page-fade-leave-to {
+  opacity: 0;
+}
+
+.shimmer-bg {
+  background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 37%, #f3f4f6 63%);
+  background-size: 200% 100%;
+  animation: shimmer 1.6s linear infinite;
+}

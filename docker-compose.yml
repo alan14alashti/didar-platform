@@ -1,0 +1,52 @@
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-didar}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-didar}
+      POSTGRES_DB: ${POSTGRES_DB:-didar}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - didar_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-didar}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      HTTP_PORT: 8080
+      DATABASE_URL: postgres://${POSTGRES_USER:-didar}:${POSTGRES_PASSWORD:-didar}@db:5432/${POSTGRES_DB:-didar}?sslmode=disable
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
+      JWT_SECRET: ${JWT_SECRET:-dev-insecure-secret-change-me}
+      KAVENEGAR_API_KEY: ${KAVENEGAR_API_KEY:-}
+      KAVENEGAR_OTP_TEMPLATE: ${KAVENEGAR_OTP_TEMPLATE:-didar-otp}
+      KAVENEGAR_SENDER_LINE: ${KAVENEGAR_SENDER_LINE:-}
+      OTP_MOCK_MODE: ${OTP_MOCK_MODE:-}
+      DEFAULT_BRAND_SLUG: ${DEFAULT_BRAND_SLUG:-didar}
+    ports:
+      - "${HTTP_PORT:-8080}:8080"
+
+  frontend:
+    build:
+      context: ./frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8080/api/v1}
+    ports:
+      - "${FRONTEND_PORT:-5173}:80"
+
+volumes:
+  didar_db_data:
