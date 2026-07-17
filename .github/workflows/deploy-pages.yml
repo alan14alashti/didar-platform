@@ -1,5 +1,10 @@
 name: Deploy frontend to GitHub Pages
 
+# GitHub Pages cannot be enabled on this repo directly because it is private
+# and private-repo Pages requires a paid GitHub plan. Instead, this workflow
+# builds the frontend here and publishes the static output to the public
+# "didar-platform-demo" repo, which serves it via GitHub Pages. Source code
+# stays private; only the compiled, static SPA bundle is made public.
 on:
   push:
     branches: [main]
@@ -8,17 +13,11 @@ on:
       - '.github/workflows/deploy-pages.yml'
   workflow_dispatch:
 
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-concurrency:
-  group: pages
-  cancel-in-progress: true
+env:
+  DEMO_REPO: alan14alashti/didar-platform-demo
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -37,13 +36,13 @@ jobs:
 
       - name: Build
         working-directory: frontend
-        # VITE_BASE_PATH must match "/<repo-name>/" for GitHub project pages.
-        # VITE_API_BASE_URL points the static build at a live backend; since
-        # GitHub Pages only hosts static files, set this repo/org secret to a
-        # publicly reachable API URL for full functionality (auth, listings,
-        # bookings). Without it the UI renders but API calls will fail.
+        # VITE_BASE_PATH must match "/<demo-repo-name>/" since that's the path
+        # GitHub Pages serves this project page under. VITE_API_BASE_URL
+        # points the static build at a live backend; set the repo variable to
+        # a publicly reachable API URL for full functionality (auth,
+        # listings, bookings). Without it, the UI renders but API calls fail.
         env:
-          VITE_BASE_PATH: /${{ github.event.repository.name }}/
+          VITE_BASE_PATH: /didar-platform-demo/
           VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL || 'http://localhost:8080/api/v1' }}
         run: npm run build
 
@@ -51,18 +50,13 @@ jobs:
         working-directory: frontend
         run: cp dist/index.html dist/404.html
 
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
+      - name: Publish to public demo repo
+        uses: peaceiris/actions-gh-pages@v4
         with:
-          path: frontend/dist
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+          personal_token: ${{ secrets.PAGES_DEPLOY_TOKEN }}
+          external_repository: ${{ env.DEMO_REPO }}
+          publish_branch: gh-pages
+          publish_dir: frontend/dist
+          user_name: 'github-actions[bot]'
+          user_email: 'github-actions[bot]@users.noreply.github.com'
+          commit_message: 'Deploy ${{ github.sha }}'
