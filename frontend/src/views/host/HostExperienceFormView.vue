@@ -8,6 +8,7 @@ import { extractErrorMessage } from '../../api/client'
 import type { Category, Experience } from '../../api/types'
 import { useFormatters } from '../../composables/useFormatters'
 import LoadingSpinner from '../../components/LoadingSpinner.vue'
+import AppIcon from '../../components/AppIcon.vue'
 import LocationMap from '../../components/LocationMap.vue'
 
 const props = defineProps<{ id?: string }>()
@@ -175,8 +176,9 @@ onMounted(load)
 
 <template>
   <div>
-    <router-link :to="{ name: 'host-experiences' }" class="mb-4 inline-block text-sm text-gray-500 hover:text-gray-700">
-      ← {{ t('host.backToList') }}
+    <router-link :to="{ name: 'host-experiences' }" class="mb-4 inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700">
+      <AppIcon icon="heroicons-outline:arrow-left" size="sm" />
+      {{ t('host.backToList') }}
     </router-link>
 
     <h1 class="text-xl font-bold text-gray-900">

@@ -10,6 +10,7 @@ export default {
           primary: 'var(--color-primary)',
           secondary: 'var(--color-secondary)',
           accent: 'var(--color-accent)',
+          surface: 'var(--color-surface)',
         },
       },
       fontFamily: {

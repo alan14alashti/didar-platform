@@ -10,6 +10,7 @@ import { useFormatters } from '../composables/useFormatters'
 import { useAuthStore } from '../stores/auth'
 import LoadingSpinner from '../components/LoadingSpinner.vue'
 import EmptyState from '../components/EmptyState.vue'
+import AppIcon from '../components/AppIcon.vue'
 import RatingStars from '../components/RatingStars.vue'
 import LocationMap from '../components/LocationMap.vue'
 
@@ -115,7 +116,10 @@ onMounted(load)
       <div class="space-y-8 lg:col-span-2">
         <div>
           <div class="flex items-center gap-2 text-sm text-gray-500">
-            <span class="flex items-center gap-1 font-medium text-gray-600">📍 {{ experience.city }}</span>
+            <span class="flex items-center gap-1 font-medium text-gray-600">
+              <AppIcon icon="heroicons-outline:map-pin" size="sm" />
+              {{ experience.city }}
+            </span>
             <span>·</span>
             <RatingStars :rating="experience.rating_avg" />
             <span v-if="experience.rating_count">({{ experience.rating_count }})</span>
@@ -126,10 +130,12 @@ onMounted(load)
 
         <div class="flex flex-wrap gap-3 border-y border-gray-100 py-4 text-sm">
           <span class="flex items-center gap-1.5 rounded-full bg-gray-50 px-3 py-1.5 font-medium text-gray-700">
-            ⏱️ {{ t('experience.durationMinutes', { n: experience.duration_minutes }) }}
+            <AppIcon icon="heroicons-outline:clock" size="sm" />
+            {{ t('experience.durationMinutes', { n: experience.duration_minutes }) }}
           </span>
           <span class="flex items-center gap-1.5 rounded-full bg-gray-50 px-3 py-1.5 font-medium text-gray-700">
-            👥 {{ t('experience.guests', { n: experience.min_guests, m: experience.max_guests }) }}
+            <AppIcon icon="heroicons-outline:users" size="sm" />
+            {{ t('experience.guests', { n: experience.min_guests, m: experience.max_guests }) }}
           </span>
         </div>
 
@@ -152,7 +158,9 @@ onMounted(load)
             <div>
               <p class="flex items-center gap-1.5 font-semibold text-gray-900">
                 {{ experience.host.display_name || experience.host.full_name }}
-                <span v-if="experience.host.is_verified" class="text-brand-accent" title="verified">✓</span>
+                <span v-if="experience.host.is_verified" title="verified">
+                  <AppIcon icon="heroicons-outline:check-badge" size="sm" icon-class="text-brand-accent" />
+                </span>
               </p>
               <p class="text-sm text-gray-500">
                 {{ experience.host.rating_count ? t('experience.rating', { rating: experience.host.rating_avg.toFixed(1), count: experience.host.rating_count }) : t('experience.noRatingYet') }}
@@ -180,7 +188,7 @@ onMounted(load)
           </p>
 
           <div v-if="bookingSuccess" class="rounded-2xl bg-green-50 p-5 text-center">
-            <p class="text-2xl">🎉</p>
+            <AppIcon icon="heroicons-outline:check-circle" size="2xl" icon-class="mx-auto text-green-600" />
             <p class="mt-1 font-semibold text-green-700">{{ t('booking.bookingSuccessTitle') }}</p>
             <p class="mt-1 text-sm text-green-600">{{ t('booking.bookingSuccessBody') }}</p>
             <router-link to="/trips" class="btn-primary mt-4 w-full !bg-green-600 shadow-none">

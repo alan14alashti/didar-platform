@@ -63,7 +63,7 @@ apiClient.interceptors.response.use(
         return apiClient(config)
       }
       tokenStorage.clear()
-      window.location.assign('/login')
+      window.location.assign(`${import.meta.env.BASE_URL}login`.replace(/\/{2,}/g, '/'))
     }
 
     return Promise.reject(error)

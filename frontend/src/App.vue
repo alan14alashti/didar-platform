@@ -4,7 +4,7 @@ import AppFooter from './components/layout/AppFooter.vue'
 </script>
 
 <template>
-  <div class="flex min-h-full flex-col bg-[#fafafa]">
+  <div class="flex min-h-full flex-col bg-brand-surface">
     <AppHeader />
     <main class="flex-1">
       <router-view v-slot="{ Component, route }">

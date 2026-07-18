@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
 import { extractErrorMessage } from '../api/client'
+import AppIcon from '../components/AppIcon.vue'
 import { useAuthStore } from '../stores/auth'
 import { setLocale } from '../i18n'
 
@@ -85,7 +86,7 @@ async function becomeHost() {
 
     <div v-if="!authStore.isHost" class="surface-card animate-fade-up relative overflow-hidden p-6 sm:p-7">
       <div class="blob h-40 w-40 bg-brand-accent/15 -top-10 end-0" />
-      <span class="mb-2 inline-block text-2xl">🌟</span>
+      <AppIcon icon="heroicons-outline:sparkles" size="2xl" icon-class="mb-2 text-brand-primary" />
       <h2 class="text-lg font-extrabold text-gray-900">{{ t('profile.becomeHostTitle') }}</h2>
       <p class="mt-1 text-sm text-gray-500">{{ t('profile.becomeHostBody') }}</p>
 

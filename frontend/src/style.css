@@ -10,9 +10,10 @@
 
 :root {
   /* Overridden at runtime with the active brand's palette (white-label). */
-  --color-primary: #e23744;
-  --color-secondary: #1f2937;
-  --color-accent: #0ea5a4;
+  --color-primary: #708d23;
+  --color-secondary: #3d4f14;
+  --color-accent: #95a844;
+  --color-surface: #f9f5eb;
 }
 
 html,
@@ -24,7 +25,7 @@ body,
 body {
   font-family: 'Vazirmatn', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
-  background-color: #fafafa;
+  background-color: var(--color-surface);
 }
 
 .tabular-nums {
@@ -167,7 +168,7 @@ body {
 }
 
 .shimmer-bg {
-  background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 37%, #f3f4f6 63%);
+  background: linear-gradient(90deg, #f9f5eb 25%, #ede8dc 37%, #f9f5eb 63%);
   background-size: 200% 100%;
   animation: shimmer 1.6s linear infinite;
 }

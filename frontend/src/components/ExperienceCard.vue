@@ -2,6 +2,7 @@
 import { useI18n } from 'vue-i18n'
 import type { Experience } from '../api/types'
 import { useFormatters } from '../composables/useFormatters'
+import AppIcon from './AppIcon.vue'
 import RatingStars from './RatingStars.vue'
 
 const props = defineProps<{ experience: Experience }>()
@@ -28,25 +29,19 @@ const { formatPrice } = useFormatters()
         v-if="props.experience.rating_count > 0"
         class="absolute start-3 top-3 flex items-center gap-1 rounded-full bg-white/90 px-2.5 py-1 text-xs font-bold text-gray-800 shadow-soft backdrop-blur"
       >
-        ★ {{ props.experience.rating_avg.toFixed(1) }}
+        <AppIcon icon="heroicons-outline:star" size="xs" icon-class="text-amber-500" />
+        {{ props.experience.rating_avg.toFixed(1) }}
       </span>
 
       <span class="absolute end-3 top-3 grid h-8 w-8 place-items-center rounded-full bg-white/85 text-gray-500 shadow-soft backdrop-blur transition hover:text-brand-primary">
-        <svg viewBox="0 0 24 24" fill="none" class="h-4 w-4">
-          <path
-            d="M12 20.5s-7.5-4.6-9.7-9.1C.7 8 2 4.6 5.4 3.7c2.1-.5 4.1.4 5.6 2.3 1.5-1.9 3.5-2.8 5.6-2.3 3.4.9 4.7 4.3 3.1 7.7-2.2 4.5-9.7 9.1-9.7 9.1z"
-            stroke="currentColor"
-            stroke-width="1.8"
-            stroke-linejoin="round"
-          />
-        </svg>
+        <AppIcon icon="heroicons-outline:heart" size="md" />
       </span>
     </div>
 
     <div class="space-y-1.5 p-4">
       <div class="flex items-center justify-between gap-2 text-xs font-medium text-gray-400">
         <span class="flex items-center gap-1">
-          <svg viewBox="0 0 24 24" fill="none" class="h-3.5 w-3.5"><path d="M12 21s7-6.2 7-11.5A7 7 0 105 9.5C5 14.8 12 21 12 21z" stroke="currentColor" stroke-width="1.6" /><circle cx="12" cy="9.5" r="2.2" stroke="currentColor" stroke-width="1.6" /></svg>
+          <AppIcon icon="heroicons-outline:map-pin" size="sm" />
           {{ props.experience.city }}
         </span>
         <RatingStars v-if="props.experience.rating_count === 0" :rating="0" />

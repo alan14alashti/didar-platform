@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@fontsource/vazirmatn": "^5.2.8",
+    "@iconify/vue": "^5.0.1",
     "@vueuse/core": "^14.3.0",
     "axios": "^1.18.1",
     "leaflet": "^1.9.4",

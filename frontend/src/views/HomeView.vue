@@ -7,18 +7,19 @@ import type { Category, Experience } from '../api/types'
 import ExperienceCard from '../components/ExperienceCard.vue'
 import ExperienceCardSkeleton from '../components/ExperienceCardSkeleton.vue'
 import EmptyState from '../components/EmptyState.vue'
+import AppIcon from '../components/AppIcon.vue'
 import { useBrandStore } from '../stores/brand'
 
 const { t } = useI18n()
 const brandStore = useBrandStore()
 
 const categoryIcons: Record<string, string> = {
-  cooking: '🍲',
-  handicraft: '🎨',
-  nature: '🏔️',
-  history: '🏛️',
-  music: '🎵',
-  adventure: '🧭',
+  cooking: 'heroicons-outline:fire',
+  handicraft: 'heroicons-outline:paint-brush',
+  nature: 'heroicons-outline:sun',
+  history: 'heroicons-outline:building-library',
+  music: 'heroicons-outline:musical-note',
+  adventure: 'heroicons-outline:map',
 }
 
 const categories = ref<Category[]>([])
@@ -95,7 +96,8 @@ onMounted(() => {
 
       <div class="relative mx-auto max-w-7xl px-4 py-20 text-center sm:px-6 sm:py-28">
         <span class="animate-fade-up mb-4 inline-flex items-center gap-1.5 rounded-full bg-white/15 px-4 py-1.5 text-xs font-semibold text-white ring-1 ring-white/30">
-          ✨ {{ brandStore.brand?.name ?? 'Didar' }}
+          <AppIcon icon="heroicons-outline:sparkles" size="sm" />
+          {{ brandStore.brand?.name ?? 'Didar' }}
         </span>
         <h1 class="animate-fade-up text-4xl font-extrabold leading-tight text-white sm:text-5xl lg:text-6xl">
           {{ brandStore.brand?.tagline || t('home.heroTitle') }}
@@ -104,9 +106,7 @@ onMounted(() => {
 
         <div class="animate-fade-up mx-auto mt-9 max-w-xl">
           <div class="flex items-center gap-2 rounded-full bg-white p-1.5 shadow-card-hover">
-            <svg viewBox="0 0 24 24" fill="none" class="ms-3 h-5 w-5 shrink-0 text-gray-400">
-              <path d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-            </svg>
+            <AppIcon icon="heroicons-outline:magnifying-glass" size="lg" icon-class="ms-3 shrink-0 text-gray-400" />
             <input
               v-model="query"
               type="search"
@@ -127,7 +127,8 @@ onMounted(() => {
           :class="!activeCategory ? 'border-brand-primary bg-brand-primary text-white shadow-glow' : 'border-gray-200 bg-white text-gray-600 hover:border-brand-primary hover:text-brand-primary'"
           @click="activeCategory = ''"
         >
-          🌟 {{ t('home.allCategories') }}
+          <AppIcon icon="heroicons-outline:squares-2x2" size="sm" />
+          {{ t('home.allCategories') }}
         </button>
         <button
           v-for="c in categories"
@@ -137,7 +138,7 @@ onMounted(() => {
           :class="activeCategory === c.slug ? 'border-brand-primary bg-brand-primary text-white shadow-glow' : 'border-gray-200 bg-white text-gray-600 hover:border-brand-primary hover:text-brand-primary'"
           @click="selectCategory(c.slug)"
         >
-          <span>{{ categoryIcons[c.slug] ?? '📍' }}</span>
+          <AppIcon :icon="categoryIcons[c.slug] ?? 'heroicons-outline:map-pin'" size="sm" />
           {{ $i18n.locale === 'fa' ? c.title_fa : c.title_en }}
         </button>
       </div>
