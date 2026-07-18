@@ -15,14 +15,11 @@ const { locale } = useI18n()
 
 <template>
   <section class="space-y-3">
-    <div class="flex items-center justify-between gap-3 px-1">
-      <div class="flex items-center gap-2">
-        <AppIcon v-if="icon" :icon="icon" size="md" icon-class="text-brand-primary" />
-        <h2 class="text-lg font-bold text-gray-900">
-          {{ locale === 'fa' ? category.title_fa : category.title_en }}
-        </h2>
-      </div>
-      <span class="text-xs font-medium text-gray-400">{{ experiences.length }}</span>
+    <div class="flex items-center gap-2 px-1">
+      <AppIcon v-if="icon" :icon="icon" size="md" icon-class="text-brand-primary" />
+      <h2 class="text-lg font-bold text-gray-900">
+        {{ locale === 'fa' ? category.title_fa : category.title_en }}
+      </h2>
     </div>
 
     <div class="flex gap-4 overflow-x-auto pb-2 scrollbar-thin">

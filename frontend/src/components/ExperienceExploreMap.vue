@@ -31,9 +31,16 @@ const popupStyle = ref<Record<string, string>>({ display: 'none' })
 let map: MlMap | null = null
 const markerBySlug = new globalThis.Map<string, MlMarker>()
 let userMarker: MlMarker | null = null
+let resizeObserver: ResizeObserver | null = null
 
 const DEFAULT_CENTER: [number, number] = [53.688, 32.428]
 const DEFAULT_ZOOM = 5
+
+function ensureMapSize() {
+  if (!map || !el.value) return
+  if (el.value.clientWidth === 0 || el.value.clientHeight === 0) return
+  map.resize()
+}
 
 const selectedExperience = computed(() =>
   props.experiences.find((e) => e.slug === props.selectedSlug) ?? null,
@@ -151,10 +158,20 @@ onMounted(() => {
   })
 
   map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-left')
-  map.on('load', () => syncMarkers(true))
+  map.on('load', () => {
+    syncMarkers(true)
+    ensureMapSize()
+  })
   map.on('move', updatePopupPosition)
   map.on('zoom', updatePopupPosition)
   map.on('click', () => emit('select', ''))
+
+  if (el.value) {
+    resizeObserver = new ResizeObserver(() => ensureMapSize())
+    resizeObserver.observe(el.value)
+  }
+
+  requestAnimationFrame(() => ensureMapSize())
 })
 
 watch(() => props.experiences, () => syncMarkers(true), { deep: true })
@@ -172,6 +189,8 @@ watch(
 )
 
 onBeforeUnmount(() => {
+  resizeObserver?.disconnect()
+  resizeObserver = null
   for (const marker of markerBySlug.values()) marker.remove()
   markerBySlug.clear()
   userMarker?.remove()
@@ -181,8 +200,8 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="relative h-full w-full">
-    <div ref="el" class="h-full w-full" />
+  <div class="relative h-full min-h-[16rem] w-full">
+    <div ref="el" class="absolute inset-0" />
 
     <ExperienceMapPopup
       v-if="selectedExperience"

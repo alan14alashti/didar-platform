@@ -32,7 +32,6 @@ const query = ref('')
 const viewMode = ref<'map' | 'list'>('map')
 const mobileMapPanel = ref<'map' | 'list'>('map')
 const experiences = ref<Experience[]>([])
-const totalCount = ref(0)
 const isLoading = ref(true)
 const selectedSlug = ref<string | null>(null)
 
@@ -55,7 +54,6 @@ async function search() {
       page_size: 50,
     })
     experiences.value = result.items
-    totalCount.value = result.total_count
   } finally {
     isLoading.value = false
   }
@@ -115,7 +113,10 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="flex min-h-screen flex-col bg-brand-surface">
+  <div
+    class="flex flex-col bg-brand-surface"
+    :class="viewMode === 'map' ? 'h-[100dvh] overflow-hidden' : 'min-h-screen'"
+  >
     <ExploreSearchHeader
       v-model:query="query"
       v-model:category="activeCategory"
@@ -128,11 +129,11 @@ onMounted(async () => {
     />
 
     <!-- Map view -->
-    <section v-if="viewMode === 'map'" class="relative flex min-h-0 flex-1 flex-col xl:flex-row">
-      <div
-        class="relative min-h-[calc(100dvh-4.25rem)] flex-1 xl:min-h-[calc(100vh-5.5rem)]"
-        :class="mobileMapPanel === 'list' ? 'hidden xl:block' : ''"
-      >
+    <section
+      v-if="viewMode === 'map'"
+      class="relative h-[calc(100dvh-4.25rem)] overflow-hidden xl:flex xl:min-h-[calc(100vh-5.5rem)] xl:flex-1 xl:flex-row"
+    >
+      <div class="relative h-full w-full xl:min-h-0 xl:flex-1">
         <ExperienceExploreMap
           :experiences="experiences"
           :user-location="userLocation"
@@ -140,15 +141,12 @@ onMounted(async () => {
           @select="selectExperience"
           @open-detail="openDetail"
         />
-        <div v-if="isLoading" class="absolute inset-0 grid place-items-center bg-white/40 backdrop-blur-[1px]">
+        <div v-if="isLoading" class="absolute inset-0 z-10 grid place-items-center bg-white/40 backdrop-blur-[1px]">
           <p class="rounded-full bg-white px-4 py-2 text-sm font-medium text-gray-600 shadow-soft">{{ t('common.loading') }}</p>
         </div>
       </div>
 
       <aside class="hidden w-[400px] shrink-0 flex-col border-s border-gray-200 bg-white xl:flex">
-        <div class="border-b border-gray-200 px-4 py-3">
-          <p class="text-sm font-semibold text-gray-800">{{ t('home.resultsCount', { n: totalCount }) }}</p>
-        </div>
         <div class="flex-1 overflow-y-auto px-2 py-2 scrollbar-thin">
           <EmptyState v-if="!isLoading && experiences.length === 0" :title="t('home.noResults')" />
           <div v-else class="space-y-1">
@@ -164,12 +162,9 @@ onMounted(async () => {
 
       <div
         v-if="mobileMapPanel === 'list'"
-        class="flex min-h-[calc(100dvh-4.25rem)] flex-1 flex-col bg-white xl:hidden"
+        class="absolute inset-0 z-30 flex flex-col bg-white xl:hidden"
       >
-        <div class="border-b border-gray-200 px-4 py-3">
-          <p class="text-sm font-semibold text-gray-800">{{ t('home.resultsCount', { n: totalCount }) }}</p>
-        </div>
-        <div class="flex-1 overflow-y-auto px-2 py-2 scrollbar-thin">
+        <div class="flex-1 overflow-y-auto px-2 py-2 pt-3 scrollbar-thin">
           <EmptyState v-if="!isLoading && experiences.length === 0" :title="t('home.noResults')" />
           <div v-else class="space-y-1">
             <ExperienceMapListItem
@@ -197,10 +192,7 @@ onMounted(async () => {
 
     <!-- List view (Airbnb-style categorized scroll) -->
     <section v-else class="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6">
-      <div class="mb-5 flex items-center justify-between gap-3">
-        <h1 class="text-xl font-extrabold text-gray-900">{{ t('home.listExploreTitle') }}</h1>
-        <p class="text-sm text-gray-500">{{ t('home.resultsCount', { n: totalCount }) }}</p>
-      </div>
+      <h1 class="mb-5 text-xl font-extrabold text-gray-900">{{ t('home.listExploreTitle') }}</h1>
 
       <div v-if="isLoading" class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <div v-for="i in 6" :key="i" class="h-64 rounded-3xl shimmer-bg" />
