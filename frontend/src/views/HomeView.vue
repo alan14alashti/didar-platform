@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
@@ -29,11 +29,12 @@ const categoryIcons: Record<string, string> = {
 const categories = ref<Category[]>([])
 const activeCategory = ref('')
 const query = ref('')
-const viewMode = ref<'map' | 'list'>('map')
+const viewMode = ref<'map' | 'list'>('list')
 const mobileMapPanel = ref<'map' | 'list'>('map')
 const experiences = ref<Experience[]>([])
 const isLoading = ref(true)
 const selectedSlug = ref<string | null>(null)
+const mapRef = ref<{ refreshMap: () => Promise<void> } | null>(null)
 
 let searchDebounce: ReturnType<typeof setTimeout> | undefined
 
@@ -102,8 +103,19 @@ watch(query, () => {
 
 watch(userLocation, () => search())
 
-watch(viewMode, (mode) => {
-  if (mode === 'map') mobileMapPanel.value = 'map'
+watch(viewMode, async (mode) => {
+  if (mode === 'map') {
+    mobileMapPanel.value = 'map'
+    await nextTick()
+    await mapRef.value?.refreshMap()
+  }
+})
+
+watch(mobileMapPanel, async (panel) => {
+  if (viewMode.value === 'map' && panel === 'map') {
+    await nextTick()
+    await mapRef.value?.refreshMap()
+  }
 })
 
 onMounted(async () => {
@@ -135,6 +147,7 @@ onMounted(async () => {
     >
       <div class="relative h-full w-full xl:min-h-0 xl:flex-1">
         <ExperienceExploreMap
+          ref="mapRef"
           :experiences="experiences"
           :user-location="userLocation"
           :selected-slug="selectedSlug"

@@ -17,7 +17,7 @@ defineProps<{
 
 const query = defineModel<string>('query', { default: '' })
 const activeCategory = defineModel<string>('category', { default: '' })
-const viewMode = defineModel<'map' | 'list'>('viewMode', { default: 'map' })
+const viewMode = defineModel<'map' | 'list'>('viewMode', { default: 'list' })
 
 const emit = defineEmits<{ search: []; requestLocation: [] }>()
 
@@ -103,24 +103,24 @@ async function handleLogout() {
 
       <!-- Right controls -->
       <div class="flex shrink-0 items-center gap-2">
-        <div class="hidden items-center rounded-full border border-gray-200 p-0.5 sm:flex">
+        <div class="flex items-center rounded-full border border-gray-200 p-0.5">
           <button
             type="button"
-            class="flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-semibold transition"
+            class="flex items-center gap-1 rounded-full px-2 py-1.5 text-xs font-semibold transition sm:px-3"
             :class="viewMode === 'map' ? 'bg-gray-900 text-white' : 'text-gray-600 hover:bg-gray-50'"
             @click="viewMode = 'map'"
           >
             <AppIcon icon="heroicons-outline:map" size="sm" />
-            {{ t('home.mapView') }}
+            <span class="hidden sm:inline">{{ t('home.mapView') }}</span>
           </button>
           <button
             type="button"
-            class="flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-semibold transition"
+            class="flex items-center gap-1 rounded-full px-2 py-1.5 text-xs font-semibold transition sm:px-3"
             :class="viewMode === 'list' ? 'bg-gray-900 text-white' : 'text-gray-600 hover:bg-gray-50'"
             @click="viewMode = 'list'"
           >
             <AppIcon icon="heroicons-outline:squares-2x2" size="sm" />
-            {{ t('home.listView') }}
+            <span class="hidden sm:inline">{{ t('home.listView') }}</span>
           </button>
         </div>
 

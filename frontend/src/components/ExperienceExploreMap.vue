@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import maplibregl from 'maplibre-gl'
 import type { Map as MlMap, Marker as MlMarker } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 
 import type { Experience } from '../api/types'
 import type { GeoPoint } from '../composables/useGeolocation'
+import { exploreMapStyle } from '../lib/exploreMapStyle'
 import { useFormatters } from '../composables/useFormatters'
 import ExperienceMapPopup from './ExperienceMapPopup.vue'
 
@@ -29,12 +30,17 @@ const el = ref<HTMLDivElement | null>(null)
 const popupStyle = ref<Record<string, string>>({ display: 'none' })
 
 let map: MlMap | null = null
+let mapReady = false
 const markerBySlug = new globalThis.Map<string, MlMarker>()
 let userMarker: MlMarker | null = null
 let resizeObserver: ResizeObserver | null = null
 
 const DEFAULT_CENTER: [number, number] = [53.688, 32.428]
 const DEFAULT_ZOOM = 5
+
+function isValidCoord(lat: number, lng: number) {
+  return Number.isFinite(lat) && Number.isFinite(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180
+}
 
 function ensureMapSize() {
   if (!map || !el.value) return
@@ -69,6 +75,11 @@ function updatePopupPosition() {
   }
 
   const { longitude, latitude } = selectedExperience.value
+  if (!isValidCoord(latitude, longitude)) {
+    popupStyle.value = { display: 'none' }
+    return
+  }
+
   const point = map.project([longitude, latitude])
   popupStyle.value = {
     display: 'block',
@@ -77,14 +88,26 @@ function updatePopupPosition() {
   }
 }
 
+function collectCoords(): [number, number][] {
+  const coords: [number, number][] = props.experiences
+    .filter((e) => isValidCoord(e.latitude, e.longitude))
+    .map((e) => [e.longitude, e.latitude])
+
+  if (props.userLocation && isValidCoord(props.userLocation.lat, props.userLocation.lng)) {
+    coords.push([props.userLocation.lng, props.userLocation.lat])
+  }
+
+  return coords
+}
+
 function syncMarkers(fitBounds = false) {
-  if (!map) return
+  if (!map || !mapReady) return
 
   for (const marker of markerBySlug.values()) marker.remove()
   markerBySlug.clear()
 
   for (const exp of props.experiences) {
-    if (!exp.latitude || !exp.longitude) continue
+    if (!isValidCoord(exp.latitude, exp.longitude)) continue
     const element = createMarkerElement(exp, props.selectedSlug === exp.slug)
     const marker = new maplibregl.Marker({ element, anchor: 'bottom' })
       .setLngLat([exp.longitude, exp.latitude])
@@ -101,6 +124,7 @@ function syncUserMarker() {
   userMarker?.remove()
   userMarker = null
   if (!map || !props.userLocation) return
+  if (!isValidCoord(props.userLocation.lat, props.userLocation.lng)) return
 
   const dot = document.createElement('div')
   dot.className = 'exp-map-user-dot'
@@ -112,15 +136,9 @@ function syncUserMarker() {
 }
 
 function fitVisibleBounds() {
-  if (!map) return
+  if (!map || !mapReady) return
 
-  const coords: [number, number][] = props.experiences
-    .filter((e) => e.latitude && e.longitude)
-    .map((e) => [e.longitude, e.latitude])
-
-  if (props.userLocation) {
-    coords.push([props.userLocation.lng, props.userLocation.lat])
-  }
+  const coords = collectCoords()
 
   if (coords.length === 0) {
     map.easeTo({ center: DEFAULT_CENTER, zoom: DEFAULT_ZOOM })
@@ -140,18 +158,28 @@ function fitVisibleBounds() {
 }
 
 function panToSlug(slug: string | null) {
-  if (!map || !slug) return
+  if (!map || !mapReady || !slug) return
   const exp = props.experiences.find((e) => e.slug === slug)
-  if (!exp) return
+  if (!exp || !isValidCoord(exp.latitude, exp.longitude)) return
   map.easeTo({ center: [exp.longitude, exp.latitude], zoom: Math.max(map.getZoom(), 10), duration: 450 })
 }
+
+async function refreshMap() {
+  await nextTick()
+  requestAnimationFrame(() => {
+    ensureMapSize()
+    if (mapReady) syncMarkers(true)
+  })
+}
+
+defineExpose({ refreshMap })
 
 onMounted(() => {
   if (!el.value) return
 
   map = new maplibregl.Map({
     container: el.value,
-    style: 'https://tiles.openfreemap.org/styles/liberty',
+    style: exploreMapStyle,
     center: DEFAULT_CENTER,
     zoom: DEFAULT_ZOOM,
     attributionControl: { compact: true },
@@ -159,6 +187,7 @@ onMounted(() => {
 
   map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-left')
   map.on('load', () => {
+    mapReady = true
     syncMarkers(true)
     ensureMapSize()
   })
@@ -166,10 +195,8 @@ onMounted(() => {
   map.on('zoom', updatePopupPosition)
   map.on('click', () => emit('select', ''))
 
-  if (el.value) {
-    resizeObserver = new ResizeObserver(() => ensureMapSize())
-    resizeObserver.observe(el.value)
-  }
+  resizeObserver = new ResizeObserver(() => ensureMapSize())
+  resizeObserver.observe(el.value)
 
   requestAnimationFrame(() => ensureMapSize())
 })
@@ -189,6 +216,7 @@ watch(
 )
 
 onBeforeUnmount(() => {
+  mapReady = false
   resizeObserver?.disconnect()
   resizeObserver = null
   for (const marker of markerBySlug.values()) marker.remove()
