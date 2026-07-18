@@ -64,9 +64,9 @@ const { formatPrice, formatDistance } = useFormatters()
             {{ t('experience.durationMinutes', { n: experience.duration_minutes }) }}
           </p>
 
-          <p class="pt-1 text-sm text-[#222222]">
+          <p class="flex flex-wrap items-baseline gap-x-1 pt-1 text-sm text-[#222222]">
             <span class="font-semibold tabular-nums">{{ formatPrice(experience.price_amount) }}</span>
-            <span class="font-normal text-[#717171]"> {{ t('experience.perPerson') }}</span>
+            <span class="font-normal text-[#717171]">{{ t('experience.perPerson') }}</span>
           </p>
         </div>
       </button>

@@ -6,7 +6,7 @@ import 'maplibre-gl/dist/maplibre-gl.css'
 
 import type { Experience } from '../api/types'
 import type { GeoPoint } from '../composables/useGeolocation'
-import { exploreMapStyle } from '../lib/exploreMapStyle'
+import { osmMapStyle } from '../lib/exploreMapStyle'
 import { useFormatters } from '../composables/useFormatters'
 import ExperienceMapPopup from './ExperienceMapPopup.vue'
 
@@ -31,9 +31,10 @@ const popupStyle = ref<Record<string, string>>({ display: 'none' })
 
 let map: MlMap | null = null
 let mapReady = false
+let bootAttempts = 0
+let resizeObserver: ResizeObserver | null = null
 const markerBySlug = new globalThis.Map<string, MlMarker>()
 let userMarker: MlMarker | null = null
-let resizeObserver: ResizeObserver | null = null
 
 const DEFAULT_CENTER: [number, number] = [53.688, 32.428]
 const DEFAULT_ZOOM = 5
@@ -42,10 +43,54 @@ function isValidCoord(lat: number, lng: number) {
   return Number.isFinite(lat) && Number.isFinite(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180
 }
 
+function containerReady() {
+  return Boolean(el.value && el.value.clientWidth > 0 && el.value.clientHeight > 0)
+}
+
 function ensureMapSize() {
-  if (!map || !el.value) return
-  if (el.value.clientWidth === 0 || el.value.clientHeight === 0) return
+  if (!map || !containerReady()) return
   map.resize()
+}
+
+function initMap() {
+  if (map || !el.value || !containerReady()) return false
+
+  map = new maplibregl.Map({
+    container: el.value,
+    style: osmMapStyle,
+    center: DEFAULT_CENTER,
+    zoom: DEFAULT_ZOOM,
+    attributionControl: { compact: true },
+  })
+
+  map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-left')
+
+  map.on('load', () => {
+    mapReady = true
+    ensureMapSize()
+    syncMarkers(true)
+  })
+
+  map.on('idle', ensureMapSize)
+  map.on('move', updatePopupPosition)
+  map.on('zoom', updatePopupPosition)
+  map.on('click', () => emit('select', ''))
+  map.on('error', (event) => {
+    console.error('MapLibre error:', event.error)
+  })
+
+  return true
+}
+
+function bootMap() {
+  if (initMap()) {
+    ensureMapSize()
+    return
+  }
+
+  if (bootAttempts >= 30 || !el.value) return
+  bootAttempts += 1
+  requestAnimationFrame(bootMap)
 }
 
 const selectedExperience = computed(() =>
@@ -141,12 +186,12 @@ function fitVisibleBounds() {
   const coords = collectCoords()
 
   if (coords.length === 0) {
-    map.easeTo({ center: DEFAULT_CENTER, zoom: DEFAULT_ZOOM })
+    map.jumpTo({ center: DEFAULT_CENTER, zoom: DEFAULT_ZOOM })
     return
   }
 
   if (coords.length === 1) {
-    map.easeTo({ center: coords[0], zoom: 11 })
+    map.jumpTo({ center: coords[0], zoom: 11 })
     return
   }
 
@@ -154,7 +199,7 @@ function fitVisibleBounds() {
     (b, coord) => b.extend(coord),
     new maplibregl.LngLatBounds(coords[0], coords[0]),
   )
-  map.fitBounds(bounds, { padding: 60, maxZoom: 12, duration: 500 })
+  map.fitBounds(bounds, { padding: 60, maxZoom: 12, duration: 0 })
 }
 
 function panToSlug(slug: string | null) {
@@ -165,40 +210,28 @@ function panToSlug(slug: string | null) {
 }
 
 async function refreshMap() {
+  bootAttempts = 0
+  bootMap()
   await nextTick()
-  requestAnimationFrame(() => {
+  for (const delay of [0, 100, 300]) {
+    await new Promise((resolve) => setTimeout(resolve, delay))
     ensureMapSize()
-    if (mapReady) syncMarkers(true)
-  })
+  }
+  if (mapReady) syncMarkers(true)
 }
 
 defineExpose({ refreshMap })
 
-onMounted(() => {
+onMounted(async () => {
+  await nextTick()
   if (!el.value) return
 
-  map = new maplibregl.Map({
-    container: el.value,
-    style: exploreMapStyle,
-    center: DEFAULT_CENTER,
-    zoom: DEFAULT_ZOOM,
-    attributionControl: { compact: true },
-  })
-
-  map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-left')
-  map.on('load', () => {
-    mapReady = true
-    syncMarkers(true)
+  resizeObserver = new ResizeObserver(() => {
+    if (!map) bootMap()
     ensureMapSize()
   })
-  map.on('move', updatePopupPosition)
-  map.on('zoom', updatePopupPosition)
-  map.on('click', () => emit('select', ''))
-
-  resizeObserver = new ResizeObserver(() => ensureMapSize())
   resizeObserver.observe(el.value)
-
-  requestAnimationFrame(() => ensureMapSize())
+  bootMap()
 })
 
 watch(() => props.experiences, () => syncMarkers(true), { deep: true })
@@ -228,8 +261,8 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="relative h-full min-h-[16rem] w-full">
-    <div ref="el" class="absolute inset-0" />
+  <div class="exp-map-shell relative h-full w-full min-h-[20rem]">
+    <div ref="el" class="exp-map-canvas absolute inset-0 h-full w-full" />
 
     <ExperienceMapPopup
       v-if="selectedExperience"
@@ -242,6 +275,13 @@ onBeforeUnmount(() => {
 </template>
 
 <style>
+.exp-map-shell,
+.exp-map-canvas,
+.exp-map-canvas .maplibregl-map {
+  height: 100%;
+  width: 100%;
+}
+
 .maplibregl-ctrl-attrib {
   font-size: 10px;
 }

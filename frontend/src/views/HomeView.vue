@@ -145,7 +145,7 @@ onMounted(async () => {
       v-if="viewMode === 'map'"
       class="relative h-[calc(100dvh-4.25rem)] overflow-hidden xl:flex xl:min-h-[calc(100vh-5.5rem)] xl:flex-1 xl:flex-row"
     >
-      <div class="relative h-full w-full xl:min-h-0 xl:flex-1">
+      <div class="relative h-full min-h-[20rem] w-full xl:min-h-0 xl:flex-1">
         <ExperienceExploreMap
           ref="mapRef"
           :experiences="experiences"

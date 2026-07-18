@@ -182,9 +182,9 @@ onMounted(load)
       <!-- Booking card -->
       <aside class="lg:col-span-1">
         <div class="surface-card sticky top-24 space-y-4 p-6">
-          <p class="text-2xl font-extrabold text-gray-900 tabular-nums">
-            {{ formatPrice(experience.price_amount) }}
-            <span class="text-sm font-normal text-gray-500">/ {{ t('experience.perPerson') }}</span>
+          <p class="flex flex-wrap items-baseline gap-x-1 text-2xl font-extrabold text-gray-900 tabular-nums">
+            <span>{{ formatPrice(experience.price_amount) }}</span>
+            <span class="text-sm font-normal text-gray-500">{{ t('experience.perPerson') }}</span>
           </p>
 
           <div v-if="bookingSuccess" class="rounded-2xl bg-green-50 p-5 text-center">
