@@ -27,6 +27,8 @@ export const useBrandStore = defineStore('brand', () => {
     try {
       brand.value = await brandApi.current()
       applyTheme(brand.value)
+    } catch {
+      // Keep CSS defaults when the API is unreachable (e.g. offline dev).
     } finally {
       isLoaded.value = true
     }
