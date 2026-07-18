@@ -37,7 +37,13 @@
     "locatingYou": "Finding your location…",
     "locationUnavailable": "Location unavailable",
     "nearYou": "Sorted by distance from you",
-    "enableLocation": "Enable location"
+    "enableLocation": "Enable location",
+    "mapView": "Map",
+    "listView": "List",
+    "searchWhere": "Where",
+    "searchCategory": "Category",
+    "viewDetails": "View details",
+    "listExploreTitle": "Browse by category"
   },
   "experience": {
     "perPerson": "per person",

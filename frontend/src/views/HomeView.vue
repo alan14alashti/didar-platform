@@ -1,18 +1,19 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRouter } from 'vue-router'
 
 import { categoryApi, experienceApi } from '../api/endpoints'
 import type { Category, Experience } from '../api/types'
-import AppIcon from '../components/AppIcon.vue'
 import EmptyState from '../components/EmptyState.vue'
+import ExperienceCategorySection from '../components/ExperienceCategorySection.vue'
 import ExperienceExploreMap from '../components/ExperienceExploreMap.vue'
 import ExperienceMapListItem from '../components/ExperienceMapListItem.vue'
+import ExploreSearchHeader from '../components/layout/ExploreSearchHeader.vue'
 import { useGeolocation } from '../composables/useGeolocation'
-import { useBrandStore } from '../stores/brand'
 
-const { t, locale } = useI18n()
-const brandStore = useBrandStore()
+const { t } = useI18n()
+const router = useRouter()
 const { location: userLocation, isLoading: geoLoading, error: geoError, requestLocation } = useGeolocation()
 
 const categoryIcons: Record<string, string> = {
@@ -27,10 +28,11 @@ const categoryIcons: Record<string, string> = {
 const categories = ref<Category[]>([])
 const activeCategory = ref('')
 const query = ref('')
+const viewMode = ref<'map' | 'list'>('map')
 const experiences = ref<Experience[]>([])
 const totalCount = ref(0)
 const isLoading = ref(true)
-const activeSlug = ref<string | null>(null)
+const selectedSlug = ref<string | null>(null)
 
 let searchDebounce: ReturnType<typeof setTimeout> | undefined
 
@@ -52,20 +54,17 @@ async function search() {
     })
     experiences.value = result.items
     totalCount.value = result.total_count
-    if (activeSlug.value && !experiences.value.some((e) => e.slug === activeSlug.value)) {
-      activeSlug.value = experiences.value[0]?.slug ?? null
-    }
   } finally {
     isLoading.value = false
   }
 }
 
-function selectCategory(slug: string) {
-  activeCategory.value = activeCategory.value === slug ? '' : slug
+function selectExperience(slug: string) {
+  selectedSlug.value = slug || null
 }
 
-function selectExperience(slug: string) {
-  activeSlug.value = slug
+function openDetail(slug: string) {
+  router.push({ name: 'experience-detail', params: { slug } })
 }
 
 const locationHint = computed(() => {
@@ -73,6 +72,25 @@ const locationHint = computed(() => {
   if (geoError.value) return t('home.locationUnavailable')
   if (userLocation.value) return t('home.nearYou')
   return ''
+})
+
+const groupedSections = computed(() => {
+  if (activeCategory.value) {
+    const cat = categories.value.find((c) => c.slug === activeCategory.value)
+    if (!cat) return []
+    return [{ category: cat, items: experiences.value }]
+  }
+
+  const bySlug = new Map<string, Experience[]>()
+  for (const exp of experiences.value) {
+    const slug = exp.category_slug ?? 'other'
+    if (!bySlug.has(slug)) bySlug.set(slug, [])
+    bySlug.get(slug)!.push(exp)
+  }
+
+  return categories.value
+    .filter((c) => (bySlug.get(c.slug)?.length ?? 0) > 0)
+    .map((c) => ({ category: c, items: bySlug.get(c.slug)! }))
 })
 
 watch([activeCategory], () => search())
@@ -91,114 +109,75 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="flex min-h-[calc(100vh-4.5rem)] flex-col">
-    <!-- Compact explore header -->
-    <section class="border-b border-gray-200/80 bg-white/90 px-4 py-4 backdrop-blur sm:px-6">
-      <div class="mx-auto flex max-w-[1600px] flex-col gap-4">
-        <div class="flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <p class="text-xs font-semibold uppercase tracking-wide text-brand-primary">
-              {{ brandStore.brand?.name ?? 'Didar' }}
-            </p>
-            <h1 class="text-xl font-extrabold text-gray-900 sm:text-2xl">
-              {{ t('home.mapExploreTitle') }}
-            </h1>
-            <p class="mt-1 text-sm text-gray-500">{{ t('home.mapExploreSubtitle') }}</p>
-          </div>
-          <div v-if="locationHint" class="flex items-center gap-2 text-xs font-medium text-gray-500">
-            <span
-              class="inline-flex items-center gap-1 rounded-full px-2.5 py-1"
-              :class="userLocation ? 'bg-blue-50 text-blue-700' : 'bg-gray-100 text-gray-600'"
-            >
-              <AppIcon icon="heroicons-outline:map-pin" size="xs" />
-              {{ locationHint }}
-            </span>
-            <button
-              v-if="geoError"
-              type="button"
-              class="rounded-full border border-gray-200 px-2.5 py-1 text-xs font-semibold text-gray-600 hover:border-brand-primary hover:text-brand-primary"
-              @click="requestLocation"
-            >
-              {{ t('home.enableLocation') }}
-            </button>
-          </div>
-        </div>
+  <div class="flex min-h-screen flex-col bg-brand-surface">
+    <ExploreSearchHeader
+      v-model:query="query"
+      v-model:category="activeCategory"
+      v-model:view-mode="viewMode"
+      :categories="categories"
+      :category-icons="categoryIcons"
+      :location-hint="locationHint"
+      :show-location-action="Boolean(geoError)"
+      @search="search"
+      @request-location="requestLocation"
+    />
 
-        <div class="flex flex-col gap-3 lg:flex-row lg:items-center">
-          <div class="flex flex-1 items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-2 shadow-soft">
-            <AppIcon icon="heroicons-outline:magnifying-glass" size="md" icon-class="shrink-0 text-gray-400" />
-            <input
-              v-model="query"
-              type="search"
-              :placeholder="t('home.searchPlaceholder')"
-              class="w-full border-0 bg-transparent py-1 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-0"
-            />
-          </div>
-          <div class="flex gap-2 overflow-x-auto pb-1 scrollbar-thin">
-            <button
-              type="button"
-              class="flex shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-2 text-xs font-semibold transition-all"
-              :class="!activeCategory ? 'border-brand-primary bg-brand-primary text-white' : 'border-gray-200 bg-white text-gray-600 hover:border-brand-primary hover:text-brand-primary'"
-              @click="activeCategory = ''"
-            >
-              <AppIcon icon="heroicons-outline:squares-2x2" size="sm" />
-              {{ t('home.allCategories') }}
-            </button>
-            <button
-              v-for="c in categories"
-              :key="c.id"
-              type="button"
-              class="flex shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-2 text-xs font-semibold transition-all"
-              :class="activeCategory === c.slug ? 'border-brand-primary bg-brand-primary text-white' : 'border-gray-200 bg-white text-gray-600 hover:border-brand-primary hover:text-brand-primary'"
-              @click="selectCategory(c.slug)"
-            >
-              <AppIcon :icon="categoryIcons[c.slug] ?? 'heroicons-outline:map-pin'" size="sm" />
-              {{ locale === 'fa' ? c.title_fa : c.title_en }}
-            </button>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Map-first layout -->
-    <section class="mx-auto flex w-full max-w-[1600px] flex-1 flex-col lg:flex-row">
-      <div class="relative min-h-[42vh] flex-1 lg:min-h-[calc(100vh-12rem)] lg:order-1">
+    <!-- Map view -->
+    <section v-if="viewMode === 'map'" class="relative flex min-h-0 flex-1 flex-col lg:flex-row">
+      <div class="relative min-h-[50vh] flex-1 lg:min-h-[calc(100vh-8.5rem)]">
         <ExperienceExploreMap
           :experiences="experiences"
           :user-location="userLocation"
-          :active-slug="activeSlug"
+          :selected-slug="selectedSlug"
           @select="selectExperience"
+          @open-detail="openDetail"
         />
-        <div
-          v-if="isLoading"
-          class="absolute inset-0 grid place-items-center bg-white/50 backdrop-blur-sm"
-        >
-          <p class="rounded-full bg-white px-4 py-2 text-sm font-medium text-gray-600 shadow-soft">
-            {{ t('common.loading') }}
-          </p>
+        <div v-if="isLoading" class="absolute inset-0 grid place-items-center bg-white/40 backdrop-blur-[1px]">
+          <p class="rounded-full bg-white px-4 py-2 text-sm font-medium text-gray-600 shadow-soft">{{ t('common.loading') }}</p>
         </div>
       </div>
 
-      <aside class="flex w-full flex-col border-t border-gray-200 bg-brand-surface lg:w-[420px] lg:border-s lg:border-t-0 xl:w-[460px] lg:order-2">
+      <aside class="hidden w-[400px] shrink-0 flex-col border-s border-gray-200 bg-white xl:flex">
         <div class="border-b border-gray-200 px-4 py-3">
           <p class="text-sm font-semibold text-gray-800">{{ t('home.resultsCount', { n: totalCount }) }}</p>
         </div>
-
         <div class="flex-1 overflow-y-auto px-3 py-3 scrollbar-thin">
           <EmptyState v-if="!isLoading && experiences.length === 0" :title="t('home.noResults')" />
-
           <div v-else class="space-y-2.5">
             <ExperienceMapListItem
               v-for="exp in experiences"
               :key="exp.id"
               :experience="exp"
-              :active="activeSlug === exp.slug"
-              @mouseenter="activeSlug = exp.slug"
-              @focusin="activeSlug = exp.slug"
+              :active="selectedSlug === exp.slug"
+              @mouseenter="selectedSlug = exp.slug"
             />
           </div>
         </div>
       </aside>
+    </section>
+
+    <!-- List view (Airbnb-style categorized scroll) -->
+    <section v-else class="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6">
+      <div class="mb-5 flex items-center justify-between gap-3">
+        <h1 class="text-xl font-extrabold text-gray-900">{{ t('home.listExploreTitle') }}</h1>
+        <p class="text-sm text-gray-500">{{ t('home.resultsCount', { n: totalCount }) }}</p>
+      </div>
+
+      <div v-if="isLoading" class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div v-for="i in 6" :key="i" class="h-64 rounded-3xl shimmer-bg" />
+      </div>
+
+      <EmptyState v-else-if="experiences.length === 0" :title="t('home.noResults')" />
+
+      <div v-else class="space-y-10">
+        <ExperienceCategorySection
+          v-for="section in groupedSections"
+          :key="section.category.id"
+          :category="section.category"
+          :experiences="section.items"
+          :icon="categoryIcons[section.category.slug]"
+        />
+      </div>
     </section>
   </div>
 </template>
