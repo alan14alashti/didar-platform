@@ -42,8 +42,8 @@ jobs:
         working-directory: frontend
         env:
           VITE_BASE_PATH: /didar-platform/
-          # Static demo data — no external API or CORS on GitHub Pages.
-          VITE_DEMO_MODE: 'true'
+          VITE_DEMO_MODE: 'false'
+          VITE_API_BASE_URL: https://didar-api.onrender.com/api/v1
         run: npm run build
 
       - name: Add SPA fallback (404.html)
