@@ -149,7 +149,6 @@ onMounted(async () => {
               :key="exp.id"
               :experience="exp"
               :active="selectedSlug === exp.slug"
-              @mouseenter="selectedSlug = exp.slug"
             />
           </div>
         </div>

@@ -9,14 +9,12 @@ import { useAuthStore } from '../../stores/auth'
 import { useBrandStore } from '../../stores/brand'
 import AppIcon from '../AppIcon.vue'
 
-const props = defineProps<{
+defineProps<{
   categories: Category[]
   categoryIcons: Record<string, string>
   locationHint?: string
   showLocationAction?: boolean
 }>()
-
-void props
 
 const query = defineModel<string>('query', { default: '' })
 const activeCategory = defineModel<string>('category', { default: '' })
