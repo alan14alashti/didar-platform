@@ -70,7 +70,7 @@ function updatePopupPosition() {
   }
 }
 
-function syncMarkers() {
+function syncMarkers(fitBounds = false) {
   if (!map) return
 
   for (const marker of markerBySlug.values()) marker.remove()
@@ -86,7 +86,7 @@ function syncMarkers() {
   }
 
   syncUserMarker()
-  fitVisibleBounds()
+  if (fitBounds) fitVisibleBounds()
   updatePopupPosition()
 }
 
@@ -151,13 +151,13 @@ onMounted(() => {
   })
 
   map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-left')
-  map.on('load', syncMarkers)
+  map.on('load', () => syncMarkers(true))
   map.on('move', updatePopupPosition)
   map.on('zoom', updatePopupPosition)
   map.on('click', () => emit('select', ''))
 })
 
-watch(() => props.experiences, syncMarkers, { deep: true })
+watch(() => props.experiences, () => syncMarkers(true), { deep: true })
 watch(() => props.userLocation, () => {
   syncUserMarker()
   fitVisibleBounds()
@@ -204,24 +204,24 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: center;
   border-radius: 9999px;
-  border: 1.5px solid rgb(112 141 35 / 0.35);
+  border: 1px solid rgb(221 221 221);
   background: white;
-  padding: 0.4rem 0.7rem;
-  font-size: 0.72rem;
-  font-weight: 800;
-  color: #1f2937;
-  box-shadow: 0 4px 14px rgb(15 23 42 / 0.12);
+  padding: 0.35rem 0.65rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #222222;
+  box-shadow: 0 2px 4px rgb(0 0 0 / 0.18);
   white-space: nowrap;
   cursor: pointer;
-  transition: transform 160ms ease, background-color 160ms ease, color 160ms ease;
+  transition: transform 160ms ease, background-color 160ms ease, color 160ms ease, border-color 160ms ease;
 }
 
 .exp-map-marker:hover,
 .exp-map-marker--active {
-  background: var(--color-primary, #708d23);
-  border-color: var(--color-primary, #708d23);
+  background: #222222;
+  border-color: #222222;
   color: white;
-  transform: scale(1.06);
+  transform: scale(1.04);
 }
 
 .exp-map-user-dot {

@@ -40,6 +40,8 @@
     "enableLocation": "فعال‌سازی موقعیت",
     "mapView": "نقشه",
     "listView": "فهرست",
+    "showList": "نمایش فهرست",
+    "showMap": "نمایش نقشه",
     "searchWhere": "کجا؟",
     "searchCategory": "دسته",
     "viewDetails": "مشاهده جزئیات",

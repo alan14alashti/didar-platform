@@ -9,6 +9,7 @@ import EmptyState from '../components/EmptyState.vue'
 import ExperienceCategorySection from '../components/ExperienceCategorySection.vue'
 import ExperienceExploreMap from '../components/ExperienceExploreMap.vue'
 import ExperienceMapListItem from '../components/ExperienceMapListItem.vue'
+import AppIcon from '../components/AppIcon.vue'
 import ExploreSearchHeader from '../components/layout/ExploreSearchHeader.vue'
 import { useGeolocation } from '../composables/useGeolocation'
 
@@ -29,6 +30,7 @@ const categories = ref<Category[]>([])
 const activeCategory = ref('')
 const query = ref('')
 const viewMode = ref<'map' | 'list'>('map')
+const mobileMapPanel = ref<'map' | 'list'>('map')
 const experiences = ref<Experience[]>([])
 const totalCount = ref(0)
 const isLoading = ref(true)
@@ -102,6 +104,10 @@ watch(query, () => {
 
 watch(userLocation, () => search())
 
+watch(viewMode, (mode) => {
+  if (mode === 'map') mobileMapPanel.value = 'map'
+})
+
 onMounted(async () => {
   await loadCategories()
   await search()
@@ -115,7 +121,6 @@ onMounted(async () => {
       v-model:category="activeCategory"
       v-model:view-mode="viewMode"
       :categories="categories"
-      :category-icons="categoryIcons"
       :location-hint="locationHint"
       :show-location-action="Boolean(geoError)"
       @search="search"
@@ -123,8 +128,11 @@ onMounted(async () => {
     />
 
     <!-- Map view -->
-    <section v-if="viewMode === 'map'" class="relative flex min-h-0 flex-1 flex-col lg:flex-row">
-      <div class="relative min-h-[50vh] flex-1 lg:min-h-[calc(100vh-8.5rem)]">
+    <section v-if="viewMode === 'map'" class="relative flex min-h-0 flex-1 flex-col xl:flex-row">
+      <div
+        class="relative min-h-[calc(100dvh-4.25rem)] flex-1 xl:min-h-[calc(100vh-5.5rem)]"
+        :class="mobileMapPanel === 'list' ? 'hidden xl:block' : ''"
+      >
         <ExperienceExploreMap
           :experiences="experiences"
           :user-location="userLocation"
@@ -141,9 +149,9 @@ onMounted(async () => {
         <div class="border-b border-gray-200 px-4 py-3">
           <p class="text-sm font-semibold text-gray-800">{{ t('home.resultsCount', { n: totalCount }) }}</p>
         </div>
-        <div class="flex-1 overflow-y-auto px-3 py-3 scrollbar-thin">
+        <div class="flex-1 overflow-y-auto px-2 py-2 scrollbar-thin">
           <EmptyState v-if="!isLoading && experiences.length === 0" :title="t('home.noResults')" />
-          <div v-else class="space-y-2.5">
+          <div v-else class="space-y-1">
             <ExperienceMapListItem
               v-for="exp in experiences"
               :key="exp.id"
@@ -153,6 +161,38 @@ onMounted(async () => {
           </div>
         </div>
       </aside>
+
+      <div
+        v-if="mobileMapPanel === 'list'"
+        class="flex min-h-[calc(100dvh-4.25rem)] flex-1 flex-col bg-white xl:hidden"
+      >
+        <div class="border-b border-gray-200 px-4 py-3">
+          <p class="text-sm font-semibold text-gray-800">{{ t('home.resultsCount', { n: totalCount }) }}</p>
+        </div>
+        <div class="flex-1 overflow-y-auto px-2 py-2 scrollbar-thin">
+          <EmptyState v-if="!isLoading && experiences.length === 0" :title="t('home.noResults')" />
+          <div v-else class="space-y-1">
+            <ExperienceMapListItem
+              v-for="exp in experiences"
+              :key="`mobile-${exp.id}`"
+              :experience="exp"
+              :active="selectedSlug === exp.slug"
+            />
+          </div>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        class="fixed bottom-5 start-1/2 z-40 flex -translate-x-1/2 items-center gap-2 rounded-full bg-[#222222] px-5 py-3 text-sm font-semibold text-white shadow-[0_6px_16px_rgba(0,0,0,0.2)] xl:hidden"
+        @click="mobileMapPanel = mobileMapPanel === 'map' ? 'list' : 'map'"
+      >
+        <AppIcon
+          :icon="mobileMapPanel === 'map' ? 'heroicons-outline:squares-2x2' : 'heroicons-outline:map'"
+          size="sm"
+        />
+        {{ mobileMapPanel === 'map' ? t('home.showList') : t('home.showMap') }}
+      </button>
     </section>
 
     <!-- List view (Airbnb-style categorized scroll) -->

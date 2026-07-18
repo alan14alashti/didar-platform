@@ -11,7 +11,6 @@ import AppIcon from '../AppIcon.vue'
 
 defineProps<{
   categories: Category[]
-  categoryIcons: Record<string, string>
   locationHint?: string
   showLocationAction?: boolean
 }>()
@@ -177,47 +176,6 @@ async function handleLogout() {
         <button type="button" class="flex-1 rounded-full py-2 text-xs font-semibold" :class="viewMode === 'list' ? 'bg-gray-900 text-white' : ''" @click="viewMode = 'list'">{{ t('home.listView') }}</button>
       </div>
       <button type="button" class="btn-primary w-full" @click="submitSearch">{{ t('common.search') }}</button>
-    </div>
-
-    <!-- Category filter chips -->
-    <div class="border-t border-gray-100">
-      <div class="mx-auto flex max-w-[1600px] gap-2 overflow-x-auto px-4 py-2.5 scrollbar-thin sm:px-6">
-        <button
-          type="button"
-          class="flex shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition"
-          :class="!activeCategory ? 'border-gray-900 bg-gray-900 text-white' : 'border-gray-200 bg-white text-gray-600'"
-          @click="activeCategory = ''"
-        >
-          {{ t('home.allCategories') }}
-        </button>
-        <button
-          v-for="c in categories"
-          :key="c.id"
-          type="button"
-          class="flex shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition"
-          :class="activeCategory === c.slug ? 'border-gray-900 bg-gray-900 text-white' : 'border-gray-200 bg-white text-gray-600'"
-          @click="activeCategory = activeCategory === c.slug ? '' : c.slug"
-        >
-          <AppIcon :icon="categoryIcons[c.slug] ?? 'heroicons-outline:map-pin'" size="sm" />
-          {{ locale === 'fa' ? c.title_fa : c.title_en }}
-        </button>
-
-        <span
-          v-if="locationHint"
-          class="ms-auto hidden shrink-0 items-center gap-1 rounded-full bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-700 lg:inline-flex"
-        >
-          <AppIcon icon="heroicons-outline:map-pin" size="xs" />
-          {{ locationHint }}
-        </span>
-        <button
-          v-if="showLocationAction"
-          type="button"
-          class="hidden shrink-0 rounded-full border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-600 lg:inline-flex"
-          @click="emit('requestLocation')"
-        >
-          {{ t('home.enableLocation') }}
-        </button>
-      </div>
     </div>
   </header>
 </template>

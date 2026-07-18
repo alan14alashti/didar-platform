@@ -1,4 +1,5 @@
 import type { Brand, Category, Experience } from './types'
+import { demoExperiencesMore } from './demoExperiencesMore'
 
 export const demoBrand: Brand = {
   id: '1',
@@ -354,4 +355,5 @@ export const demoExperiences: Experience[] = [
   experience('16', 'saffron-harvest-torbat', 'برداشت زعفران در مزارع تربت حیدریه', 'در فصل برداشت، زعفران بچینید و چای زعفران بنوشید.', 'تجربه برداشت زعفران.', 1680000, 210, 8, 2, 'تربت حیدریه', 'مزارع زعفران', 35.274, 59.219, '3', 'nature', 4.94, 29, { id: 'h6', full_name: 'فاطمه رستمی', avatar_url: 'https://i.pravatar.cc/200?u=fatemeh-rostami', display_name: 'فاطمه رستمی', bio: 'قالی‌باف.', is_verified: true, rating_avg: 4.92, rating_count: 143 }),
   experience('17', 'kashan-rosewater-distillery', 'گلاب‌گیری سنتی در قمصر کاشان', 'کارگاه گلاب‌گیری و عطر گل محمدی.', 'گلاب‌گیری در قمصر.', 1120000, 120, 10, 1, 'کاشان', 'قمصر', 33.959, 51.435, '2', 'handicraft', 4.83, 47, { id: 'h6', full_name: 'فاطمه رستمی', avatar_url: 'https://i.pravatar.cc/200?u=fatemeh-rostami', display_name: 'فاطمه رستمی', bio: 'قالی‌باف.', is_verified: true, rating_avg: 4.92, rating_count: 143 }),
   experience('18', 'tehran-grand-bazaar-tour', 'تور تاریخ در بازار بزرگ تهران', 'از سرای مروی تا گنبد مینا.', 'تور بازار تاریخی تهران.', 780000, 150, 8, 1, 'تهران', 'بازار بزرگ تهران', 35.672, 51.421, '4', 'history', 4.79, 91, { id: 'h3', full_name: 'رضا صادقی', avatar_url: 'https://i.pravatar.cc/200?u=reza-sadeghi', display_name: 'رضا صادقی', bio: 'راهنما.', is_verified: true, rating_avg: 4.95, rating_count: 210 }),
+  ...demoExperiencesMore,
 ]

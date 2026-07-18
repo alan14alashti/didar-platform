@@ -40,6 +40,8 @@
     "enableLocation": "Enable location",
     "mapView": "Map",
     "listView": "List",
+    "showList": "Show list",
+    "showMap": "Show map",
     "searchWhere": "Where",
     "searchCategory": "Category",
     "viewDetails": "View details",

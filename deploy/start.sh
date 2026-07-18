@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # All-in-one container: PostGIS + Didar API (Render free tier).
+# Redeploy: apply migrations 0008–0009 and latest API.
 set -euo pipefail
 
 # Render injects PORT; our Go server reads HTTP_PORT.
