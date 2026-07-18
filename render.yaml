@@ -1,0 +1,24 @@
+# Free single-service deploy: PostGIS + Go API in one container.
+# Cold start ~1 min after 15 min idle. Data resets on restart (seed reloads).
+services:
+  - type: web
+    name: didar-api
+    runtime: docker
+    plan: free
+    region: oregon
+    dockerfilePath: ./deploy/Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: HTTP_PORT
+        value: "8080"
+      - key: CORS_ORIGINS
+        value: https://alan14alashti.github.io,http://localhost:5173
+      - key: JWT_SECRET
+        generateValue: true
+      - key: OTP_MOCK_MODE
+        value: "true"
+      - key: DEFAULT_BRAND_SLUG
+        value: didar
