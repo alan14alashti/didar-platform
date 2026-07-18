@@ -39,7 +39,7 @@ func NewRouter(d Deps) http.Handler {
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   d.CORSOrigins,
 		AllowedMethods:   []string{"GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "Bypass-Tunnel-Reminder"},
 		AllowCredentials: true,
 		MaxAge:           300,
 	}))

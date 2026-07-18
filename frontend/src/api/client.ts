@@ -7,6 +7,11 @@ export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localho
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
+  // Skips the localtunnel.me interstitial "click to continue" HTML page that
+  // would otherwise be returned instead of JSON when the API is exposed via
+  // a `loca.lt` quick tunnel (used for the public GitHub Pages demo). Ignored
+  // by any other host.
+  headers: { 'Bypass-Tunnel-Reminder': 'true' },
 })
 
 apiClient.interceptors.request.use((config) => {
@@ -24,9 +29,11 @@ async function refreshAccessToken(): Promise<string | null> {
   if (!refreshToken) return null
 
   try {
-    const { data } = await axios.post<AuthResponse>(`${API_BASE_URL}/auth/refresh`, {
-      refresh_token: refreshToken,
-    })
+    const { data } = await axios.post<AuthResponse>(
+      `${API_BASE_URL}/auth/refresh`,
+      { refresh_token: refreshToken },
+      { headers: { 'Bypass-Tunnel-Reminder': 'true' } },
+    )
     tokenStorage.setTokens(data.access_token, data.refresh_token)
     return data.access_token
   } catch {
