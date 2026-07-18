@@ -90,6 +90,8 @@ FROM (VALUES
         'از سرای مروی تا گنبد مینا؛ داستان بازار قدیمی پایتخت.',
         'راهنمای محلی شما را در بازار تهران همراهی می‌کند، سراهای تاریخی، حمام‌ها و کاروانسراها را نشان می‌دهد و در یک چایخانه قدیمی توقف می‌کنید.',
         780000, 150, 8, 1, 'تهران', 'بازار بزرگ تهران',
+        51.421, 35.672, '+989121110003', 'history', 4.79, 91
+    )
 ) AS e(slug, title, summary, description, price_amount, duration_minutes, max_guests, min_guests, city, address, lon, lat, host_phone, category_slug, rating_avg, rating_count)
 JOIN brands b ON b.slug = 'didar'
 JOIN users u ON u.phone = e.host_phone
