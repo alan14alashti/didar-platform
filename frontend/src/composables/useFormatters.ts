@@ -43,5 +43,14 @@ export function useFormatters() {
     return new Intl.NumberFormat(intlLocale.value).format(n)
   }
 
-  return { formatPrice, formatDateTime, formatDate, formatNumber }
+  function formatDistance(meters: number): string {
+    if (meters < 1000) {
+      return locale.value === 'fa' ? `${formatNumber(Math.round(meters))} متر` : `${formatNumber(Math.round(meters))} m`
+    }
+    const km = meters / 1000
+    const rounded = km < 10 ? km.toFixed(1) : Math.round(km).toString()
+    return locale.value === 'fa' ? `${rounded} کیلومتر` : `${rounded} km`
+  }
+
+  return { formatPrice, formatDateTime, formatDate, formatNumber, formatDistance }
 }

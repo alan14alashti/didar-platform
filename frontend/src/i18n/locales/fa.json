@@ -31,7 +31,13 @@
     "allCategories": "همه",
     "resultsCount": "{n} تجربه پیدا شد",
     "noResults": "تجربه‌ای با این فیلترها پیدا نشد.",
-    "loadMore": "نمایش بیشتر"
+    "loadMore": "نمایش بیشتر",
+    "mapExploreTitle": "کشف تجربه‌ها روی نقشه",
+    "mapExploreSubtitle": "تجربه‌های نزدیک خود را ببینید و روی نقشه یا فهرست کنار آن انتخاب کنید.",
+    "locatingYou": "در حال یافتن موقعیت شما…",
+    "locationUnavailable": "موقعیت مکانی در دسترس نیست",
+    "nearYou": "مرتب‌شده بر اساس فاصله از شما",
+    "enableLocation": "فعال‌سازی موقعیت"
   },
   "experience": {
     "perPerson": "برای هر نفر",

@@ -14,6 +14,16 @@ export interface SearchExperiencesParams {
 
 const delay = (ms = 120) => new Promise((resolve) => setTimeout(resolve, ms))
 
+function haversineMeters(lat1: number, lng1: number, lat2: number, lng2: number) {
+  const toRad = (deg: number) => (deg * Math.PI) / 180
+  const dLat = toRad(lat2 - lat1)
+  const dLng = toRad(lng2 - lng1)
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2
+  return 6371000 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+}
+
 function listItem(exp: Experience): Experience {
   const { photos, slots, host, ...rest } = exp
   void photos
@@ -54,6 +64,17 @@ export const demoExperienceApi = {
           (item.summary?.toLowerCase().includes(q) ?? false) ||
           item.city.toLowerCase().includes(q),
       )
+    }
+
+    if (params.lat != null && params.lng != null) {
+      items = items.map((item) => ({
+        ...item,
+        distance_meters: haversineMeters(params.lat!, params.lng!, item.latitude, item.longitude),
+      }))
+      if (params.radius_km && params.radius_km > 0) {
+        items = items.filter((item) => (item.distance_meters ?? 0) <= params.radius_km! * 1000)
+      }
+      items.sort((a, b) => (a.distance_meters ?? 0) - (b.distance_meters ?? 0))
     }
 
     const total_count = items.length

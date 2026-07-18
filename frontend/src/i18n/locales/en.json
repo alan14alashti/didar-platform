@@ -31,7 +31,13 @@
     "allCategories": "All",
     "resultsCount": "{n} experiences found",
     "noResults": "No experiences matched these filters.",
-    "loadMore": "Show more"
+    "loadMore": "Show more",
+    "mapExploreTitle": "Explore experiences on the map",
+    "mapExploreSubtitle": "See what's nearby, pick a pin on the map or choose from the list beside it.",
+    "locatingYou": "Finding your location…",
+    "locationUnavailable": "Location unavailable",
+    "nearYou": "Sorted by distance from you",
+    "enableLocation": "Enable location"
   },
   "experience": {
     "perPerson": "per person",
