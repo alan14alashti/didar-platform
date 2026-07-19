@@ -10,22 +10,23 @@ import (
 	chimw "github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 
-	"github.com/didar-platform/backend/internal/auth"
 	"github.com/didar-platform/backend/internal/booking"
 	"github.com/didar-platform/backend/internal/brand"
 	"github.com/didar-platform/backend/internal/experience"
+	"github.com/didar-platform/backend/internal/host"
 	"github.com/didar-platform/backend/internal/platform"
+	"github.com/didar-platform/pkg/authkit"
 )
 
 type Deps struct {
 	CORSOrigins []string
-	TokenIssuer *auth.TokenIssuer
+	TokenIssuer *authkit.TokenIssuer
 
-	AuthHandler       *auth.Handler
-	BrandHandler       *brand.Handler
-	ExperienceHandler  *experience.Handler
-	ExperienceHost     *experience.HostHandler
-	BookingHandler     *booking.Handler
+	HostHandler       *host.Handler
+	BrandHandler      *brand.Handler
+	ExperienceHandler *experience.Handler
+	ExperienceHost    *experience.HostHandler
+	BookingHandler    *booking.Handler
 }
 
 func NewRouter(d Deps) http.Handler {
@@ -45,10 +46,10 @@ func NewRouter(d Deps) http.Handler {
 	}))
 
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
-		platform.JSON(w, http.StatusOK, map[string]any{"status": "ok"})
+		platform.JSON(w, http.StatusOK, map[string]any{"status": "ok", "service": "api"})
 	})
 
-	requireAuth := auth.RequireAuth(d.TokenIssuer)
+	requireAuth := authkit.RequireAuth(d.TokenIssuer)
 
 	r.Route("/api/v1", func(api chi.Router) {
 		api.Get("/brand", d.BrandHandler.Current)
@@ -56,26 +57,17 @@ func NewRouter(d Deps) http.Handler {
 		api.Get("/experiences", d.ExperienceHandler.List)
 		api.Get("/experiences/{slug}", d.ExperienceHandler.GetBySlug)
 
-		api.Route("/auth", func(a chi.Router) {
-			a.Post("/otp/request", d.AuthHandler.RequestOTP)
-			a.Post("/otp/verify", d.AuthHandler.VerifyOTP)
-			a.Post("/refresh", d.AuthHandler.Refresh)
-			a.Post("/logout", d.AuthHandler.Logout)
-		})
-
 		api.Group(func(g chi.Router) {
 			g.Use(requireAuth)
 
-			g.Get("/me", d.AuthHandler.Me)
-			g.Patch("/me", d.AuthHandler.UpdateMe)
-			g.Post("/me/become-host", d.AuthHandler.BecomeHost)
+			g.Post("/me/become-host", d.HostHandler.BecomeHost)
 
 			g.Post("/bookings", d.BookingHandler.Create)
 			g.Get("/me/bookings", d.BookingHandler.ListMine)
 			g.Post("/me/bookings/{id}/cancel", d.BookingHandler.CancelMine)
 
 			g.Route("/host", func(h chi.Router) {
-				h.Use(auth.RequireHost)
+				h.Use(authkit.RequireHost)
 
 				h.Get("/experiences", d.ExperienceHost.ListMine)
 				h.Post("/experiences", d.ExperienceHost.Create)

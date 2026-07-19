@@ -1,5 +1,6 @@
 import type { Brand, Category, Experience } from './types'
 import { demoExperiencesMore } from './demoExperiencesMore'
+import { demoPhotosFor } from './demoPhotos'
 
 export const demoBrand: Brand = {
   id: '1',
@@ -33,11 +34,7 @@ export const demoCategories: Category[] = [
 const now = new Date().toISOString()
 
 function photosFor(slug: string, title: string) {
-  return [
-    { id: `${slug}-1`, url: `https://picsum.photos/seed/${slug}-1/1200/800`, alt: title, sort_order: 0, is_cover: true },
-    { id: `${slug}-2`, url: `https://picsum.photos/seed/${slug}-2/1200/800`, alt: title, sort_order: 1, is_cover: false },
-    { id: `${slug}-3`, url: `https://picsum.photos/seed/${slug}-3/1200/800`, alt: title, sort_order: 2, is_cover: false },
-  ]
+  return demoPhotosFor(slug, title)
 }
 
 function slotsFor(experienceId: string, durationMinutes: number, maxGuests: number) {
@@ -105,7 +102,7 @@ function experience(
     rating_count,
     created_at: now,
     updated_at: now,
-    cover_photo_url: photos[0].url,
+    cover_photo_url: photos.find((photo) => photo.is_cover)?.url ?? photos[0].url,
     photos,
     slots: slotsFor(id, duration_minutes, max_guests),
     host,

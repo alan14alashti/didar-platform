@@ -10,45 +10,29 @@ import (
 
 // Config holds all environment-driven settings for the API server.
 type Config struct {
-	Env            string
-	HTTPPort       string
-	DatabaseURL    string
-	CORSOrigins    []string
-	JWTSecret      string
-	AccessTokenTTL time.Duration
-	RefreshTokenTTL time.Duration
-
-	// Kavenegar SMS/OTP provider settings.
-	KavenegarAPIKey      string
-	KavenegarTemplate    string
-	KavenegarSenderLine  string
-	// When true (or when API key missing) OTP codes are logged instead of
-	// sent over SMS. Useful for local development without SMS credit.
-	OTPMockMode bool
-	OTPTTL      time.Duration
-	OTPCodeLen  int
-
-	DefaultBrandSlug string
+	Env                string
+	HTTPPort           string
+	DatabaseURL        string
+	CORSOrigins        []string
+	JWTSecret          string
+	AccessTokenTTL     time.Duration
+	AuthServiceURL     string
+	InternalServiceKey string
+	DefaultBrandSlug   string
 }
 
 func Load() Config {
-	cfg := Config{
-		Env:                 getEnv("APP_ENV", "development"),
-		HTTPPort:             getEnv("HTTP_PORT", "8080"),
-		DatabaseURL:          getEnv("DATABASE_URL", "postgres://didar:didar@localhost:5432/didar?sslmode=disable"),
-		CORSOrigins:          splitCSV(getEnv("CORS_ORIGINS", "http://localhost:5173")),
-		JWTSecret:            getEnv("JWT_SECRET", "dev-insecure-secret-change-me"),
-		AccessTokenTTL:       getDurationMinutes("ACCESS_TOKEN_TTL_MINUTES", 30),
-		RefreshTokenTTL:      getDurationMinutes("REFRESH_TOKEN_TTL_MINUTES", 60*24*30),
-		KavenegarAPIKey:      getEnv("KAVENEGAR_API_KEY", ""),
-		KavenegarTemplate:    getEnv("KAVENEGAR_OTP_TEMPLATE", "didar-otp"),
-		KavenegarSenderLine:  getEnv("KAVENEGAR_SENDER_LINE", ""),
-		OTPTTL:               getDurationMinutes("OTP_TTL_MINUTES", 2),
-		OTPCodeLen:           getInt("OTP_CODE_LENGTH", 5),
-		DefaultBrandSlug:     getEnv("DEFAULT_BRAND_SLUG", "didar"),
+	return Config{
+		Env:                getEnv("APP_ENV", "development"),
+		HTTPPort:           getEnv("HTTP_PORT", "8080"),
+		DatabaseURL:        getEnv("DATABASE_URL", "postgres://didar:didar@localhost:5432/didar?sslmode=disable"),
+		CORSOrigins:        splitCSV(getEnv("CORS_ORIGINS", "http://localhost:5173")),
+		JWTSecret:          getEnv("JWT_SECRET", "dev-insecure-secret-change-me"),
+		AccessTokenTTL:     getDurationMinutes("ACCESS_TOKEN_TTL_MINUTES", 30),
+		AuthServiceURL:     getEnv("AUTH_SERVICE_URL", "http://localhost:8081"),
+		InternalServiceKey: getEnv("INTERNAL_SERVICE_KEY", "dev-internal-key-change-me"),
+		DefaultBrandSlug:   getEnv("DEFAULT_BRAND_SLUG", "didar"),
 	}
-	cfg.OTPMockMode = getBool("OTP_MOCK_MODE", cfg.KavenegarAPIKey == "")
-	return cfg
 }
 
 func getEnv(key, fallback string) string {

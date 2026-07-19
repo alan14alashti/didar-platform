@@ -1,11 +1,11 @@
-package auth
+package authkit
 
 import (
 	"context"
 	"net/http"
 	"strings"
 
-	"github.com/didar-platform/backend/internal/platform"
+	"github.com/didar-platform/pkg/platform"
 )
 
 type contextKey string
@@ -35,8 +35,7 @@ func RequireAuth(issuer *TokenIssuer) func(http.Handler) http.Handler {
 }
 
 // OptionalAuth behaves like RequireAuth but continues the chain (without
-// claims in context) when no/invalid token is present, for endpoints that
-// change behaviour when a caller happens to be logged in.
+// claims in context) when no/invalid token is present.
 func OptionalAuth(issuer *TokenIssuer) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

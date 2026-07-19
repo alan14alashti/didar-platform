@@ -36,8 +36,6 @@ func generateOpaqueToken() (string, error) {
 	return hex.EncodeToString(buf), nil
 }
 
-// Create issues a new refresh token, stores its hash, and returns the
-// plaintext token to hand back to the client.
 func (r *SessionRepository) Create(ctx context.Context, userID, userAgent, ipAddress string) (string, error) {
 	token, err := generateOpaqueToken()
 	if err != nil {
@@ -53,7 +51,6 @@ func (r *SessionRepository) Create(ctx context.Context, userID, userAgent, ipAdd
 	return token, nil
 }
 
-// Rotate validates the given refresh token, revokes it, and issues a new one.
 func (r *SessionRepository) Rotate(ctx context.Context, token, userAgent, ipAddress string) (userID string, newToken string, err error) {
 	tx, err := r.pool.Begin(ctx)
 	if err != nil {

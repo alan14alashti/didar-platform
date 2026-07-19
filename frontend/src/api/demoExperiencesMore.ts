@@ -1,4 +1,5 @@
 import type { Experience } from './types'
+import { demoPhotosFor } from './demoPhotos'
 
 export const demoNow = new Date().toISOString()
 
@@ -66,11 +67,7 @@ export const demoHosts = {
 } satisfies Record<string, NonNullable<Experience['host']>>
 
 function photosFor(slug: string, title: string) {
-  return [
-    { id: `${slug}-1`, url: `https://picsum.photos/seed/${slug}-1/1200/800`, alt: title, sort_order: 0, is_cover: true },
-    { id: `${slug}-2`, url: `https://picsum.photos/seed/${slug}-2/1200/800`, alt: title, sort_order: 1, is_cover: false },
-    { id: `${slug}-3`, url: `https://picsum.photos/seed/${slug}-3/1200/800`, alt: title, sort_order: 2, is_cover: false },
-  ]
+  return demoPhotosFor(slug, title)
 }
 
 function slotsFor(experienceId: string, durationMinutes: number, maxGuests: number) {
@@ -138,7 +135,7 @@ export function buildExperience(
     rating_count,
     created_at: demoNow,
     updated_at: demoNow,
-    cover_photo_url: photos[0].url,
+    cover_photo_url: photos.find((photo) => photo.is_cover)?.url ?? photos[0].url,
     photos,
     slots: slotsFor(id, duration_minutes, max_guests),
     host,

@@ -10,29 +10,59 @@ services:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - didar_db_data:/var/lib/postgresql/data
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-didar}"]
       interval: 5s
       timeout: 5s
       retries: 10
 
-  backend:
+  auth:
     build:
-      context: ./backend
+      context: .
+      dockerfile: services/auth/Dockerfile
     restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
     environment:
       APP_ENV: ${APP_ENV:-development}
+      HTTP_PORT: 8081
+      DATABASE_URL: postgres://${POSTGRES_USER:-didar}:${POSTGRES_PASSWORD:-didar}@db:5432/didar_auth?sslmode=disable
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
+      JWT_SECRET: ${JWT_SECRET:-dev-insecure-secret-change-me}
+      INTERNAL_SERVICE_KEY: ${INTERNAL_SERVICE_KEY:-dev-internal-key-change-me}
+      OTP_CHANNEL: ${OTP_CHANNEL:-email}
+      OTP_MOCK_MODE: ${OTP_MOCK_MODE:-true}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USERNAME: ${SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM:-noreply@didar.travel}
+      KAVENEGAR_API_KEY: ${KAVENEGAR_API_KEY:-}
+      KAVENEGAR_OTP_TEMPLATE: ${KAVENEGAR_OTP_TEMPLATE:-didar-otp}
+      KAVENEGAR_SENDER_LINE: ${KAVENEGAR_SENDER_LINE:-}
+    ports:
+      - "${AUTH_HTTP_PORT:-8081}:8081"
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      auth:
+        condition: service_started
+    environment:
+      APP_ENV: ${APP_ENV:-development}
       HTTP_PORT: 8080
       DATABASE_URL: postgres://${POSTGRES_USER:-didar}:${POSTGRES_PASSWORD:-didar}@db:5432/${POSTGRES_DB:-didar}?sslmode=disable
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
       JWT_SECRET: ${JWT_SECRET:-dev-insecure-secret-change-me}
-      KAVENEGAR_API_KEY: ${KAVENEGAR_API_KEY:-}
-      KAVENEGAR_OTP_TEMPLATE: ${KAVENEGAR_OTP_TEMPLATE:-didar-otp}
-      KAVENEGAR_SENDER_LINE: ${KAVENEGAR_SENDER_LINE:-}
-      OTP_MOCK_MODE: ${OTP_MOCK_MODE:-}
+      AUTH_SERVICE_URL: http://auth:8081
+      INTERNAL_SERVICE_KEY: ${INTERNAL_SERVICE_KEY:-dev-internal-key-change-me}
       DEFAULT_BRAND_SLUG: ${DEFAULT_BRAND_SLUG:-didar}
     ports:
       - "${HTTP_PORT:-8080}:8080"
@@ -40,11 +70,13 @@ services:
   frontend:
     build:
       context: ./frontend
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8080/api/v1}
+        VITE_AUTH_BASE_URL: ${VITE_AUTH_BASE_URL:-http://localhost:8081/api/v1}
     restart: unless-stopped
     depends_on:
       - backend
-    environment:
-      VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8080/api/v1}
+      - auth
     ports:
       - "${FRONTEND_PORT:-5173}:80"
 

@@ -44,6 +44,7 @@ jobs:
           VITE_BASE_PATH: /didar-platform/
           VITE_DEMO_MODE: 'false'
           VITE_API_BASE_URL: https://didar-api.onrender.com/api/v1
+          VITE_AUTH_BASE_URL: https://didar-api.onrender.com/api/v1
         run: npm run build
 
       - name: Add SPA fallback (404.html)

@@ -15,7 +15,7 @@ import (
 )
 
 var (
-	ErrTooManyRequests = errors.New("otp requested too recently")
+	ErrTooManyRequests  = errors.New("otp requested too recently")
 	ErrExpiredOrUnknown = errors.New("otp code expired or not found")
 	ErrIncorrectCode    = errors.New("otp code incorrect")
 	ErrTooManyAttempts  = errors.New("too many incorrect attempts")
@@ -23,18 +23,21 @@ var (
 
 const PurposeLogin = "login"
 
-// resendCooldown prevents a phone number from requesting a new code more
-// than once within this window, to slow down SMS-bombing abuse.
 const resendCooldown = 30 * time.Second
 
-type Service struct {
-	pool     *pgxpool.Pool
-	sender   SMSSender
-	ttl      time.Duration
-	codeLen  int
+// OTPSender delivers a one-time code to a recipient (email or phone).
+type OTPSender interface {
+	SendOTP(ctx context.Context, recipient, code string) error
 }
 
-func NewService(pool *pgxpool.Pool, sender SMSSender, ttl time.Duration, codeLen int) *Service {
+type Service struct {
+	pool    *pgxpool.Pool
+	sender  OTPSender
+	ttl     time.Duration
+	codeLen int
+}
+
+func NewService(pool *pgxpool.Pool, sender OTPSender, ttl time.Duration, codeLen int) *Service {
 	if codeLen <= 0 {
 		codeLen = 5
 	}
@@ -59,14 +62,13 @@ func generateNumericCode(length int) (string, error) {
 	return string(digits), nil
 }
 
-// Request generates a fresh OTP, stores its hash and dispatches it via SMS.
-func (s *Service) Request(ctx context.Context, phone, purpose, ipAddress string) error {
+func (s *Service) Request(ctx context.Context, recipient, purpose, ipAddress string) error {
 	var lastCreated time.Time
 	err := s.pool.QueryRow(ctx, `
 		SELECT created_at FROM otp_codes
-		WHERE phone = $1 AND purpose = $2
+		WHERE recipient = $1 AND purpose = $2
 		ORDER BY created_at DESC LIMIT 1
-	`, phone, purpose).Scan(&lastCreated)
+	`, recipient, purpose).Scan(&lastCreated)
 	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 		return fmt.Errorf("check last otp: %w", err)
 	}
@@ -80,22 +82,21 @@ func (s *Service) Request(ctx context.Context, phone, purpose, ipAddress string)
 	}
 
 	_, err = s.pool.Exec(ctx, `
-		INSERT INTO otp_codes (phone, purpose, code_hash, expires_at, ip_address)
+		INSERT INTO otp_codes (recipient, purpose, code_hash, expires_at, ip_address)
 		VALUES ($1, $2, $3, $4, $5)
-	`, phone, purpose, hashCode(code), time.Now().Add(s.ttl), ipAddress)
+	`, recipient, purpose, hashCode(code), time.Now().Add(s.ttl), ipAddress)
 	if err != nil {
 		return fmt.Errorf("store otp: %w", err)
 	}
 
-	if err := s.sender.SendOTP(ctx, phone, code); err != nil {
+	if err := s.sender.SendOTP(ctx, recipient, code); err != nil {
 		return fmt.Errorf("send otp: %w", err)
 	}
 
 	return nil
 }
 
-// Verify checks the latest unconsumed OTP for a phone/purpose pair.
-func (s *Service) Verify(ctx context.Context, phone, purpose, code string) error {
+func (s *Service) Verify(ctx context.Context, recipient, purpose, code string) error {
 	var (
 		id           string
 		codeHash     string
@@ -108,9 +109,9 @@ func (s *Service) Verify(ctx context.Context, phone, purpose, code string) error
 	err := s.pool.QueryRow(ctx, `
 		SELECT id::text, code_hash, attempt_count, max_attempts, expires_at, consumed_at
 		FROM otp_codes
-		WHERE phone = $1 AND purpose = $2
+		WHERE recipient = $1 AND purpose = $2
 		ORDER BY created_at DESC LIMIT 1
-	`, phone, purpose).Scan(&id, &codeHash, &attemptCount, &maxAttempts, &expiresAt, &consumedAt)
+	`, recipient, purpose).Scan(&id, &codeHash, &attemptCount, &maxAttempts, &expiresAt, &consumedAt)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrExpiredOrUnknown

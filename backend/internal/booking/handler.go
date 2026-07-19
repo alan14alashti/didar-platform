@@ -6,7 +6,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	"github.com/didar-platform/backend/internal/auth"
+	"github.com/didar-platform/pkg/authkit"
 	"github.com/didar-platform/backend/internal/platform"
 )
 
@@ -19,7 +19,7 @@ func NewHandler(repo *Repository) *Handler {
 }
 
 func callerID(r *http.Request) (string, bool) {
-	claims, ok := auth.FromContext(r.Context())
+	claims, ok := authkit.FromContext(r.Context())
 	if !ok {
 		return "", false
 	}

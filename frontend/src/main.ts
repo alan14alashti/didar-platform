@@ -3,7 +3,6 @@ import { createPinia } from 'pinia'
 
 import App from './App.vue'
 import './style.css'
-import 'leaflet/dist/leaflet.css'
 import { router } from './router'
 import { i18n, applyDocumentDirection, getInitialLocale } from './i18n'
 import { useBrandStore } from './stores/brand'

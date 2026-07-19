@@ -1,4 +1,4 @@
-import { apiClient } from './client'
+import { apiClient, authClient } from './client'
 import {
   demoAuthApi,
   demoBookingApi,
@@ -44,13 +44,13 @@ export interface SearchExperiencesParams {
 export const authApi = isDemoMode
   ? demoAuthApi
   : {
-      requestOtp: (phone: string) => apiClient.post('/auth/otp/request', { phone }),
-      verifyOtp: (phone: string, code: string) =>
-        apiClient.post<AuthResponse>('/auth/otp/verify', { phone, code }).then((r) => r.data),
-      logout: (refreshToken: string) => apiClient.post('/auth/logout', { refresh_token: refreshToken }),
-      me: () => apiClient.get<User>('/me').then((r) => r.data),
+      requestOtp: (email: string) => authClient.post('/auth/otp/request', { email }),
+      verifyOtp: (email: string, code: string) =>
+        authClient.post<AuthResponse>('/auth/otp/verify', { email, code }).then((r) => r.data),
+      logout: (refreshToken: string) => authClient.post('/auth/logout', { refresh_token: refreshToken }),
+      me: () => authClient.get<User>('/me').then((r) => r.data),
       updateMe: (payload: { full_name?: string; locale?: string }) =>
-        apiClient.patch<User>('/me', payload).then((r) => r.data),
+        authClient.patch<User>('/me', payload).then((r) => r.data),
       becomeHost: (payload: { display_name?: string; bio?: string; city?: string }) =>
         apiClient.post<AuthResponse>('/me/become-host', payload).then((r) => r.data),
     }

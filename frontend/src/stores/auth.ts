@@ -30,12 +30,12 @@ export const useAuthStore = defineStore('auth', () => {
     isBooting.value = false
   }
 
-  async function requestOtp(phone: string) {
-    await authApi.requestOtp(phone)
+  async function requestOtp(email: string) {
+    await authApi.requestOtp(email)
   }
 
-  async function verifyOtp(phone: string, code: string) {
-    const res = await authApi.verifyOtp(phone, code)
+  async function verifyOtp(email: string, code: string) {
+    const res = await authApi.verifyOtp(email, code)
     setSession(res.user, res.access_token, res.refresh_token)
     return res
   }

@@ -101,7 +101,7 @@ async function handleLogout() {
             @click="menuOpen = !menuOpen"
           >
             <img v-if="authStore.user?.avatar_url" :src="authStore.user.avatar_url" class="h-full w-full object-cover" alt="" />
-            <span v-else>{{ (authStore.user?.full_name || authStore.user?.phone || '?')[0] }}</span>
+            <span v-else>{{ (authStore.user?.full_name || authStore.user?.email || '?')[0] }}</span>
           </button>
 
           <transition

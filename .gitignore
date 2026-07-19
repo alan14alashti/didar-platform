@@ -18,6 +18,9 @@ backend/tmp/
 backend/bin/
 backend/didar-backend
 backend/*.exe
+services/auth/*.exe
+*.exe
+go.work.sum
 
 # --- Editors / OS ---
 .vscode/*

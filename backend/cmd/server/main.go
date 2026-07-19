@@ -14,16 +14,17 @@ import (
 
 	"github.com/joho/godotenv"
 
-	"github.com/didar-platform/backend/internal/auth"
+	"github.com/didar-platform/backend/internal/authclient"
 	"github.com/didar-platform/backend/internal/booking"
 	"github.com/didar-platform/backend/internal/brand"
 	"github.com/didar-platform/backend/internal/config"
 	"github.com/didar-platform/backend/internal/dbx"
 	"github.com/didar-platform/backend/internal/experience"
+	"github.com/didar-platform/backend/internal/host"
 	"github.com/didar-platform/backend/internal/httpserver"
-	"github.com/didar-platform/backend/internal/otp"
 	"github.com/didar-platform/backend/internal/user"
 	"github.com/didar-platform/backend/migrations"
+	"github.com/didar-platform/pkg/authkit"
 )
 
 func main() {
@@ -48,24 +49,15 @@ func main() {
 		os.Exit(1)
 	}
 
-	var sender otp.SMSSender
-	if cfg.OTPMockMode {
-		slog.Warn("OTP_MOCK_MODE is on: OTP codes will be logged instead of sent via SMS")
-		sender = otp.MockSender{}
-	} else {
-		sender = otp.NewKavenegarSender(cfg.KavenegarAPIKey, cfg.KavenegarTemplate, cfg.KavenegarSenderLine)
-	}
-
 	userRepo := user.NewRepository(pool)
 	brandRepo := brand.NewRepository(pool)
 	experienceRepo := experience.NewRepository(pool)
 	bookingRepo := booking.NewRepository(pool)
 
-	otpService := otp.NewService(pool, sender, cfg.OTPTTL, cfg.OTPCodeLen)
-	tokenIssuer := auth.NewTokenIssuer(cfg.JWTSecret, cfg.AccessTokenTTL)
-	sessionRepo := auth.NewSessionRepository(pool, cfg.RefreshTokenTTL)
+	tokenIssuer := authkit.NewTokenIssuer(cfg.JWTSecret, cfg.AccessTokenTTL)
+	authClient := authclient.New(cfg.AuthServiceURL, cfg.InternalServiceKey)
 
-	authHandler := auth.NewHandler(userRepo, otpService, tokenIssuer, sessionRepo, brandRepo, cfg.DefaultBrandSlug)
+	hostHandler := host.NewHandler(userRepo, brandRepo, authClient, cfg.DefaultBrandSlug)
 	brandHandler := brand.NewHandler(brandRepo, cfg.DefaultBrandSlug)
 	experienceHandler := experience.NewHandler(experienceRepo)
 	experienceHostHandler := experience.NewHostHandler(experienceRepo, func() (string, error) {
@@ -80,7 +72,7 @@ func main() {
 	router := httpserver.NewRouter(httpserver.Deps{
 		CORSOrigins:       cfg.CORSOrigins,
 		TokenIssuer:       tokenIssuer,
-		AuthHandler:       authHandler,
+		HostHandler:       hostHandler,
 		BrandHandler:      brandHandler,
 		ExperienceHandler: experienceHandler,
 		ExperienceHost:    experienceHostHandler,

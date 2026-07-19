@@ -11,8 +11,8 @@ const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
 
-const step = ref<'phone' | 'otp'>('phone')
-const phone = ref('')
+const step = ref<'email' | 'otp'>('email')
+const email = ref('')
 const code = ref('')
 const isSubmitting = ref(false)
 const errorMessage = ref('')
@@ -32,11 +32,11 @@ async function sendCode() {
   errorMessage.value = ''
   isSubmitting.value = true
   try {
-    await authStore.requestOtp(phone.value)
+    await authStore.requestOtp(email.value)
     step.value = 'otp'
     startCooldown()
   } catch (err) {
-    errorMessage.value = extractErrorMessage(err, t('auth.invalidPhone'))
+    errorMessage.value = extractErrorMessage(err, t('auth.invalidEmail'))
   } finally {
     isSubmitting.value = false
   }
@@ -46,7 +46,7 @@ async function verify() {
   errorMessage.value = ''
   isSubmitting.value = true
   try {
-    await authStore.verifyOtp(phone.value, code.value)
+    await authStore.verifyOtp(email.value, code.value)
     const redirect = (route.query.redirect as string) || '/'
     router.push(redirect)
   } catch (err) {
@@ -56,8 +56,8 @@ async function verify() {
   }
 }
 
-function changeNumber() {
-  step.value = 'phone'
+function changeEmail() {
+  step.value = 'email'
   code.value = ''
   errorMessage.value = ''
 }
@@ -82,15 +82,16 @@ function changeNumber() {
           enter-to-class="opacity-100 translate-x-0"
           mode="out-in"
         >
-          <form v-if="step === 'phone'" key="phone" class="mt-7 space-y-4" @submit.prevent="sendCode">
+          <form v-if="step === 'email'" key="email" class="mt-7 space-y-4" @submit.prevent="sendCode">
             <div>
-              <label class="mb-1.5 block text-sm font-semibold text-gray-700">{{ t('auth.phoneLabel') }}</label>
+              <label class="mb-1.5 block text-sm font-semibold text-gray-700">{{ t('auth.emailLabel') }}</label>
               <input
-                v-model="phone"
-                type="tel"
-                inputmode="numeric"
+                v-model="email"
+                type="email"
+                inputmode="email"
+                autocomplete="email"
                 dir="ltr"
-                :placeholder="t('auth.phonePlaceholder')"
+                :placeholder="t('auth.emailPlaceholder')"
                 class="input-fancy text-center text-lg tracking-wide"
                 required
               />
@@ -102,7 +103,9 @@ function changeNumber() {
           </form>
 
           <form v-else key="otp" class="mt-7 space-y-4" @submit.prevent="verify">
-            <p class="rounded-xl bg-brand-primary/5 px-3 py-2.5 text-center text-sm text-gray-600" dir="ltr">{{ t('auth.otpSentTo', { phone }) }}</p>
+            <p class="rounded-xl bg-brand-primary/5 px-3 py-2.5 text-center text-sm text-gray-600" dir="ltr">
+              {{ t('auth.otpSentTo', { email }) }}
+            </p>
             <div>
               <label class="mb-1.5 block text-sm font-semibold text-gray-700">{{ t('auth.otpLabel') }}</label>
               <input
@@ -121,8 +124,8 @@ function changeNumber() {
               {{ isSubmitting ? t('common.loading') : t('auth.verify') }}
             </button>
             <div class="flex items-center justify-between pt-1 text-sm">
-              <button type="button" class="font-medium text-gray-500 transition hover:text-gray-700" @click="changeNumber">
-                {{ t('auth.changeNumber') }}
+              <button type="button" class="font-medium text-gray-500 transition hover:text-gray-700" @click="changeEmail">
+                {{ t('auth.changeEmail') }}
               </button>
               <button
                 type="button"

@@ -63,8 +63,8 @@ async function becomeHost() {
 
       <div class="mt-5 space-y-4">
         <div>
-          <label class="mb-1.5 block text-sm font-semibold text-gray-700">{{ t('profile.phoneNumber') }}</label>
-          <input :value="authStore.user?.phone" dir="ltr" disabled class="input-fancy bg-gray-50 text-gray-500" />
+          <label class="mb-1.5 block text-sm font-semibold text-gray-700">{{ t('profile.emailAddress') }}</label>
+          <input :value="authStore.user?.email" dir="ltr" disabled class="input-fancy bg-gray-50 text-gray-500" />
         </div>
         <div>
           <label class="mb-1.5 block text-sm font-semibold text-gray-700">{{ t('profile.fullName') }}</label>

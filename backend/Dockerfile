@@ -1,9 +1,13 @@
 FROM golang:1.23-alpine AS build
 WORKDIR /src
 RUN apk add --no-cache git
-COPY go.mod go.sum ./
+COPY go.work go.work
+COPY pkg/authkit/ pkg/authkit/
+COPY pkg/platform/ pkg/platform/
+COPY backend/go.mod backend/go.sum ./backend/
+WORKDIR /src/backend
 RUN go mod download
-COPY . .
+COPY backend/ .
 RUN CGO_ENABLED=0 GOOS=linux go build -o /out/server ./cmd/server
 
 FROM alpine:3.20

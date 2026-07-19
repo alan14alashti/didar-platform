@@ -30,7 +30,8 @@ export interface Category {
 
 export interface User {
   id: string
-  phone: string
+  email: string | null
+  phone: string | null
   full_name: string | null
   avatar_url: string | null
   locale: string

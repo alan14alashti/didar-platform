@@ -32,7 +32,7 @@ onMounted(async () => {
 <template>
   <div>
     <h1 class="text-2xl font-bold text-gray-900">
-      {{ t('host.dashboardTitle') }} <span class="text-gray-400">— {{ authStore.user?.full_name || authStore.user?.phone }}</span>
+      {{ t('host.dashboardTitle') }} <span class="text-gray-400">— {{ authStore.user?.full_name || authStore.user?.email }}</span>
     </h1>
 
     <LoadingSpinner v-if="isLoading" :label="t('common.loading')" />

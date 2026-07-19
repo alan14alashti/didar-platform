@@ -4,31 +4,27 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/didar-platform/backend/internal/brand"
-	"github.com/didar-platform/backend/internal/otp"
-	"github.com/didar-platform/backend/internal/platform"
-	"github.com/didar-platform/backend/internal/user"
+	"github.com/didar-platform/pkg/authkit"
+	"github.com/didar-platform/pkg/platform"
+	"github.com/didar-platform/services/auth/internal/otp"
+	"github.com/didar-platform/services/auth/internal/user"
 )
 
 type Handler struct {
-	users       *user.Repository
-	otpService  *otp.Service
-	issuer      *TokenIssuer
-	sessions    *SessionRepository
-	brands      *brand.Repository
-	defaultSlug string
+	users      *user.Repository
+	otpService *otp.Service
+	issuer     *authkit.TokenIssuer
+	sessions   *SessionRepository
 }
 
-func NewHandler(users *user.Repository, otpService *otp.Service, issuer *TokenIssuer, sessions *SessionRepository, brands *brand.Repository, defaultBrandSlug string) *Handler {
-	return &Handler{users: users, otpService: otpService, issuer: issuer, sessions: sessions, brands: brands, defaultSlug: defaultBrandSlug}
+func NewHandler(users *user.Repository, otpService *otp.Service, issuer *authkit.TokenIssuer, sessions *SessionRepository) *Handler {
+	return &Handler{users: users, otpService: otpService, issuer: issuer, sessions: sessions}
 }
 
 type requestOTPBody struct {
-	Phone string `json:"phone"`
+	Email string `json:"email"`
 }
 
-// RequestOTP sends a one-time code to the given Iranian mobile number
-// via Kavenegar (or logs it in mock/dev mode).
 func (h *Handler) RequestOTP(w http.ResponseWriter, r *http.Request) {
 	var body requestOTPBody
 	if err := platform.DecodeJSON(r, &body); err != nil {
@@ -36,13 +32,13 @@ func (h *Handler) RequestOTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	phone := NormalizePhone(body.Phone)
-	if phone == "" {
-		platform.WriteError(w, platform.ErrValidation("Please enter a valid Iranian mobile number"))
+	email := NormalizeEmail(body.Email)
+	if email == "" {
+		platform.WriteError(w, platform.ErrValidation("Please enter a valid email address"))
 		return
 	}
 
-	err := h.otpService.Request(r.Context(), phone, otp.PurposeLogin, r.RemoteAddr)
+	err := h.otpService.Request(r.Context(), email, otp.PurposeLogin, r.RemoteAddr)
 	switch {
 	case errors.Is(err, otp.ErrTooManyRequests):
 		platform.WriteError(w, platform.NewAPIError(http.StatusTooManyRequests, "otp_cooldown", "Please wait a bit before requesting another code"))
@@ -52,24 +48,22 @@ func (h *Handler) RequestOTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	platform.JSON(w, http.StatusOK, map[string]any{"phone": phone, "sent": true})
+	platform.JSON(w, http.StatusOK, map[string]any{"email": email, "sent": true})
 }
 
 type verifyOTPBody struct {
-	Phone string `json:"phone"`
+	Email string `json:"email"`
 	Code  string `json:"code"`
 }
 
-type authResponse struct {
-	AccessToken  string    `json:"access_token"`
-	RefreshToken string    `json:"refresh_token"`
-	ExpiresAt    string    `json:"expires_at"`
+type AuthResponse struct {
+	AccessToken  string     `json:"access_token"`
+	RefreshToken string     `json:"refresh_token"`
+	ExpiresAt    string     `json:"expires_at"`
 	User         *user.User `json:"user"`
-	IsNewUser    bool      `json:"is_new_user"`
+	IsNewUser    bool       `json:"is_new_user"`
 }
 
-// VerifyOTP validates the code, creates the user on first login, and
-// issues an access + refresh token pair.
 func (h *Handler) VerifyOTP(w http.ResponseWriter, r *http.Request) {
 	var body verifyOTPBody
 	if err := platform.DecodeJSON(r, &body); err != nil {
@@ -77,13 +71,13 @@ func (h *Handler) VerifyOTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	phone := NormalizePhone(body.Phone)
-	if phone == "" {
-		platform.WriteError(w, platform.ErrValidation("Please enter a valid Iranian mobile number"))
+	email := NormalizeEmail(body.Email)
+	if email == "" {
+		platform.WriteError(w, platform.ErrValidation("Please enter a valid email address"))
 		return
 	}
 
-	err := h.otpService.Verify(r.Context(), phone, otp.PurposeLogin, body.Code)
+	err := h.otpService.Verify(r.Context(), email, otp.PurposeLogin, body.Code)
 	switch {
 	case errors.Is(err, otp.ErrIncorrectCode):
 		platform.WriteError(w, platform.NewAPIError(http.StatusBadRequest, "otp_incorrect", "The code you entered is incorrect"))
@@ -100,9 +94,9 @@ func (h *Handler) VerifyOTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	isNewUser := false
-	u, err := h.users.GetByPhone(r.Context(), phone)
+	u, err := h.users.GetByEmail(r.Context(), email)
 	if errors.Is(err, user.ErrNotFound) {
-		u, err = h.users.CreateWithPhone(r.Context(), phone)
+		u, err = h.users.CreateWithEmail(r.Context(), email)
 		isNewUser = true
 	} else if err == nil {
 		_ = h.users.TouchLastLogin(r.Context(), u.ID)
@@ -127,7 +121,7 @@ func (h *Handler) respondWithSession(w http.ResponseWriter, r *http.Request, u *
 		return
 	}
 
-	platform.JSON(w, http.StatusOK, authResponse{
+	platform.JSON(w, http.StatusOK, AuthResponse{
 		AccessToken:  access,
 		RefreshToken: refresh,
 		ExpiresAt:    expiresAt.Format("2006-01-02T15:04:05Z07:00"),
@@ -169,7 +163,7 @@ func (h *Handler) Refresh(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	platform.JSON(w, http.StatusOK, authResponse{
+	platform.JSON(w, http.StatusOK, AuthResponse{
 		AccessToken:  access,
 		RefreshToken: newToken,
 		ExpiresAt:    expiresAt.Format("2006-01-02T15:04:05Z07:00"),
@@ -187,7 +181,7 @@ func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
-	claims, ok := FromContext(r.Context())
+	claims, ok := authkit.FromContext(r.Context())
 	if !ok {
 		platform.WriteError(w, platform.ErrUnauthorized)
 		return
@@ -206,7 +200,7 @@ type updateMeBody struct {
 }
 
 func (h *Handler) UpdateMe(w http.ResponseWriter, r *http.Request) {
-	claims, ok := FromContext(r.Context())
+	claims, ok := authkit.FromContext(r.Context())
 	if !ok {
 		platform.WriteError(w, platform.ErrUnauthorized)
 		return
@@ -224,38 +218,15 @@ func (h *Handler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 	platform.JSON(w, http.StatusOK, u)
 }
 
-type becomeHostBody struct {
-	DisplayName *string `json:"display_name"`
-	Bio         *string `json:"bio"`
-	City        *string `json:"city"`
-}
-
-// BecomeHost flips the caller into a host: from this point their JWTs
-// (after re-login/refresh) carry is_host=true and the frontend shows the
-// host dashboard alongside the regular guest experience.
-func (h *Handler) BecomeHost(w http.ResponseWriter, r *http.Request) {
-	claims, ok := FromContext(r.Context())
-	if !ok {
-		platform.WriteError(w, platform.ErrUnauthorized)
-		return
-	}
-	var body becomeHostBody
-	if err := platform.DecodeJSON(r, &body); err != nil {
-		platform.WriteError(w, err)
-		return
-	}
-
-	b, err := h.brands.GetBySlug(r.Context(), h.defaultSlug)
+func (h *Handler) EnableHost(w http.ResponseWriter, r *http.Request, userID string) {
+	u, err := h.users.EnableHost(r.Context(), userID)
 	if err != nil {
+		if errors.Is(err, user.ErrNotFound) {
+			platform.WriteError(w, platform.ErrNotFound)
+			return
+		}
 		platform.WriteError(w, err)
 		return
 	}
-
-	u, err := h.users.BecomeHost(r.Context(), claims.UserID, b.ID, body.DisplayName, body.Bio, body.City)
-	if err != nil {
-		platform.WriteError(w, err)
-		return
-	}
-
 	h.respondWithSession(w, r, u, false)
 }

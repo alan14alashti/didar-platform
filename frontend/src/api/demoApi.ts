@@ -106,7 +106,8 @@ export const demoAuthApi = {
     await delay()
     const user: User = {
       id: 'demo-user',
-      phone: '+989000000000',
+      email: 'demo@didar.local',
+      phone: null,
       full_name: 'کاربر دمو',
       avatar_url: null,
       locale: 'fa',
